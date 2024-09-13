@@ -1,10 +1,10 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from Entity import *
-from Robot import *
-from Instructions import *
-from consts import *
-from a_star_search import a_star_search
+from discrete_space.Entity import *
+from discrete_space.Robot import *
+from discrete_space.Instructions import *
+from discrete_space.consts import *
+from discrete_space.a_star_search import a_star_search
 import itertools
 
 # Helper function to compute the cost and commands for a given route

@@ -1,6 +1,6 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from consts import Direction, TURN_FACTOR, EXPANDED_CELL, SAFE_COST, SCREENSHOT_COST, TURN_RADIUS
+from discrete_space.consts import Direction, TURN_FACTOR, EXPANDED_CELL, SAFE_COST, SCREENSHOT_COST, TURN_RADIUS
 import heapq
 import math
 from typing import List, Optional, Tuple

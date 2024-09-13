@@ -4,15 +4,15 @@ import os, sys
 import pygame
 import time
 import numpy as np
-import optimal_path as calculate_optimal_path
-from optimal_path import optimal_path as calculate_optimal_path
+import discrete_space.optimal_path as calculate_optimal_path
+from discrete_space.optimal_path import optimal_path as calculate_optimal_path
 # from algo.algo import MazeSolver 
-from Robot import Robot
-from Entity import Obstacle, Grid
-from consts import Direction
-import Instructions as Instructions
-from consts import *
-from path_to_inst import *
+from discrete_space.Robot import Robot
+from discrete_space.Entity import Obstacle, Grid
+from discrete_space.consts import Direction
+import discrete_space.Instructions as Instructions
+from discrete_space.consts import *
+from discrete_space.path_to_inst import *
 import threading
 
 # Initialize Pygame
@@ -481,27 +481,12 @@ def event_handler(event, robot, start_pos, start_direction, robot_pos, robot_hea
                         print(f"Optimal path cost: {optimal_cost}")
                         for command in optimal_commands:
                             print(command)
-                        
-                        global instruction_iter
-                        temp_inst = []
-                        for command in optimal_commands:
-                            temp_inst.append((command[0][0], command[0][1], command[1]))
-                        clean_inst = clean_path(temp_inst)
-                        grid_inst = path_to_grid_inst(clean_inst)
-                        real_inst = grid_inst_to_real_inst(grid_inst)
-                        print(real_inst)
-                        instruction_iter = create_instruction_iter(real_inst)
-                        global animation_prev_time
-                        animation_prev_time = time.time()
-                
-                elif key == "play_pause":
-                    global play_pause
-                    if play_pause == "PLAY":
-                        play_pause = "PAUSE"
-                        animation_prev_time = time.time() +100000000000000
-                    else:
-                        play_pause = "PLAY"
-                        animation_prev_time = time.time()
+                            
+                            robot.set_position(command[0][0], command[0][1])
+                            robot.set_direction(command[1])
+                            
+                            update_visualization()
+                            time.sleep(0.25)
 
                 input_boxes['x_o']['text'] = '0'
                 input_boxes['y_o']['text'] = '0'
@@ -574,7 +559,6 @@ def create_instruction_iter(inst):
 
 def main():
     global robot, start_pos, start_direction, robot_pos, robot_head, grid, instruction_iter
-    clock = pygame.time.Clock()
     
     while True:
         for event in pygame.event.get():
@@ -591,18 +575,7 @@ def main():
         # Draw control panels
         draw_control_panel()
 
-        global animation_prev_time
-        if animation_prev_time and time.time() - animation_prev_time > 0.5 and instruction_iter is not None:
-            try:
-                next(instruction_iter)
-                animation_prev_time = time.time()
-            except StopIteration:
-                instruction_iter = None
-        
-        
-        
         pygame.display.flip()
-        clock.tick(100)
 
 if __name__ == "__main__":
     main()

@@ -6,7 +6,7 @@ import json as JSON
 from flask import Flask
 from flask import request
 
-import Instructions as Instructions
+import discrete_space.Instructions as Instructions
 
 # flask --app Algorithm/simulator/dummySever.py run
 # flask --app dummyServer run

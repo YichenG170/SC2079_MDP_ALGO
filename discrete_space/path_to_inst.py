@@ -1,9 +1,9 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from Entity import *
-from Robot import *
-from Instructions import *
-from consts import *
+from discrete_space.Entity import *
+from discrete_space.Robot import *
+from discrete_space.Instructions import *
+from discrete_space.consts import *
 import matplotlib.pyplot as plt
 
 # utility plot function
@@ -278,7 +278,7 @@ def grid_inst_to_real_inst(grid_inst):
 
 
 if __name__ == "__main__":
-    import optimal_path
+    import discrete_space.optimal_path as optimal_path
     grid_w = 20
     grid_h = 20
     obstacles = [

@@ -1,14 +1,12 @@
+# constants.py
 from enum import Enum
 
 class Direction(int, Enum):
     UP = 0
-    DOWN = 1
-    LEFT = 2
+    LEFT = 1
+    DOWN = 2
     RIGHT = 3
-    
-    def __init__(self):
-        return self.value
-    
+
 MOVE = [(0, 1), (0, -1), (-1, 1), (1, 1)]
 
 ROBOT_W = 19

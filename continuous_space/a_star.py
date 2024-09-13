@@ -1,6 +1,7 @@
 # a_star.py
 import math
 import heapq
+from itertools import permutations
 from entities import Robot, Obstacle, Field
 from constants import FIELD_W, FIELD_H, TURN_RADIUS, SAMPLE_DISTANCE, ACTIONS, MOVE_STEP
 
@@ -226,8 +227,8 @@ def check_turning_path(start_state, end_state, field):
         current_angle = angle_start + t * math.radians(delta_theta)
         x = center_x + TURN_RADIUS * math.cos(current_angle)
         y = center_y + TURN_RADIUS * math.sin(current_angle)
-        new_theta = (start_state.theta + t * delta_theta) % 360
-        temp_state = State(x, y, new_theta)
+        theta = (start_state.theta + t * delta_theta) % 360
+        temp_state = State(x, y, theta)
         if not check_collision(temp_state, field):
             return False
     return True

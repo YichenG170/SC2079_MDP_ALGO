@@ -33,4 +33,15 @@ TURN_RADIUS = 18  # Fixed turning radius for quarter-circle turns
 SAMPLE_DISTANCE = 2  # Units between samples when checking collision along paths
 
 # Movement step size
-MOVE_STEP = 10  # Units for straight movements
+MOVE_STEP = 2  # Units for straight movements
+
+# Observation distance
+OBSERVATION_DISTANCE = 15 + ROBOT_H / 2
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
+LIGHT_GREY = (200, 200, 200)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)

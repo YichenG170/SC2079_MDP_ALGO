@@ -4,15 +4,15 @@ import os, sys
 import pygame
 import time
 import numpy as np
-import discrete_space.optimal_path as calculate_optimal_path
-from discrete_space.optimal_path import optimal_path as calculate_optimal_path
+import optimal_path as calculate_optimal_path
+from optimal_path import optimal_path as calculate_optimal_path
 # from algo.algo import MazeSolver 
-from discrete_space.Robot import Robot
-from discrete_space.Entity import Obstacle, Grid
-from discrete_space.consts import Direction
-import discrete_space.Instructions as Instructions
-from discrete_space.consts import *
-from discrete_space.path_to_inst import *
+from Robot import Robot
+from Entity import Obstacle, Grid
+from consts import Direction
+import Instructions as Instructions
+from consts import *
+from path_to_inst import *
 import threading
 
 # Initialize Pygame

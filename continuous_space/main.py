@@ -1,9 +1,10 @@
 # main.py
+
 import math
 import pygame
-from a_star import a_star_search
+from optimal_path import optimal_path
 from entities import Field, Robot, Obstacle
-from constants import FIELD_W, FIELD_H, ROBOT_W, ROBOT_H, Direction, TURN_RADIUS, SAMPLE_DISTANCE
+from constants import *
 
 def main():
     # Initialize the field with a radius and no initial obstacles
@@ -20,19 +21,32 @@ def main():
     obstacle2 = Obstacle([150, 50], Direction.UP)
     field.add_obstacle(obstacle2)
 
-    # Define target position and orientation
-    target_position = [150, 150]
-    target_theta = 0  # Facing RIGHT
+    # Define a list of target positions and orientations
+    targets = []
+    
+    obstacles = field.get_obstacles()
+    for obstacle in obstacles:
+        (x, y) = obstacle.get_center_pos()
+        d = obstacle.get_theta()
+        
+        if d == Direction.UP:
+            targets.append(((x, y + OBSERVATION_DISTANCE + 1), Direction.DOWN))
+        elif d == Direction.DOWN:
+            targets.append(((x, y - OBSERVATION_DISTANCE - 1), Direction.UP))
+        elif d == Direction.LEFT:
+            targets.append(((x - OBSERVATION_DISTANCE - 1, y), Direction.RIGHT))
+        elif d == Direction.RIGHT:
+            targets.append(((x + OBSERVATION_DISTANCE + 1, y), Direction.LEFT))
 
-    # Run A* search to find the optimal path
-    path = a_star_search(field, target_position, target_theta)
+    # Find the optimal path covering all targets
+    path = optimal_path(field, targets)
 
     if path:
         print("Optimal path found.\n")
         # Compute and print movement commands
         compute_and_print_commands(path)
-        # Visualize the path using Pygame
-        visualize_path(field, path)
+        # Visualize the path using Pygame, passing the list of targets
+        visualize_path(field, path, targets)
     else:
         print("No path found.")
 
@@ -52,18 +66,21 @@ def compute_and_print_commands(path):
             print(f"MOVE: {distance:.2f} units backward")
         elif action.startswith('TURN_'):
             parts = action.split('_')
-            turn_direction = parts[1].lower()  # 'left' or 'right'
-            movement_direction = parts[2].lower()  # 'forward' or 'backward'
+            turn_direction = parts[1].lower()
+            movement_direction = parts[2].lower()
             print(f"TURN: Quarter-circle {turn_direction} {movement_direction}")
+        else:
+            print(f"UNKNOWN ACTION: {action}")
     print("\n")
 
-def visualize_path(field, path):
+def visualize_path(field, path, targets):
     # Initialize Pygame
     pygame.init()
     scale_factor = 3  # Enlarge the field by this factor
     window_size = (int(FIELD_W * scale_factor), int(FIELD_H * scale_factor))
     screen = pygame.display.set_mode(window_size)
     pygame.display.set_caption("Robot Path Visualization")
+    # Reduced frame rate to slow down the animation
     clock = pygame.time.Clock()
 
     # Colors
@@ -71,6 +88,8 @@ def visualize_path(field, path):
     BLACK = (0, 0, 0)
     BLUE = (0, 0, 255)
     LIGHT_GREY = (200, 200, 200)
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
 
     # Load obstacles
     obstacles = field.get_obstacles()
@@ -79,8 +98,16 @@ def visualize_path(field, path):
     running = True
     index = 0
     path_length = len(path)
-    path_positions = []  # Store positions to draw the path
-    robot_positions = []  # Positions for robot animation
+    path_positions = []    # Store positions to draw the path
+    robot_positions = []   # Positions for robot animation
+
+    # Target tracking
+    remaining_targets = targets.copy()
+    reached_targets = []
+
+    # Direction arrow tracking
+    accumulated_distance = 0.0
+    ARROW_DISTANCE = 30.0  # Increased from 15.0 to 30.0 units
 
     while running:
         for event in pygame.event.get():
@@ -104,10 +131,29 @@ def visualize_path(field, path):
         for obstacle in obstacles:
             draw_entity(screen, obstacle, BLACK, scale_factor)
 
+        # Draw targets as green points initially
+        for target in targets:
+            target_pos, _ = target
+            draw_target(screen, target_pos, GREEN, scale_factor)
+
         # Draw path
         if len(path_positions) >= 2:
             scaled_path = [((x * scale_factor), (FIELD_H - y) * scale_factor) for x, y, _ in path_positions]
             pygame.draw.lines(screen, LIGHT_GREY, False, scaled_path, 2)
+
+        # Draw direction arrows every ARROW_DISTANCE units
+        if len(path_positions) >= 2:
+            for i in range(1, len(path_positions)):
+                prev = path_positions[i - 1]
+                curr = path_positions[i]
+                segment_distance = math.hypot(curr[0] - prev[0], curr[1] - prev[1])
+                accumulated_distance += segment_distance
+
+                if accumulated_distance >= ARROW_DISTANCE:
+                    # Draw arrow at current position indicating direction
+                    x, y, theta = curr
+                    draw_direction_arrow(screen, x, y, theta, scale_factor)
+                    accumulated_distance = 0.0  # Reset accumulator
 
         # Draw robot
         if robot_positions:
@@ -118,9 +164,26 @@ def visualize_path(field, path):
             robot.set_theta(robot_theta)
             draw_entity(screen, robot, BLUE, scale_factor)
 
+            # Check if a target is reached
+            for target in remaining_targets.copy():
+                target_pos, target_theta = target
+                distance = math.hypot(robot_x - target_pos[0], robot_y - target_pos[1])
+                angle_diff = abs((robot_theta - target_theta + 180) % 360 - 180)
+                if distance <= 1.0 and angle_diff <= 5.0:
+                    # Target reached
+                    reached_targets.append(target)
+                    remaining_targets.remove(target)
+                    print(f"Reached target at {target_pos} with orientation {target_theta} degrees.")
+
+        # Draw reached targets as red points
+        for target in reached_targets:
+            target_pos, _ = target
+            draw_target(screen, target_pos, RED, scale_factor)
+
         # Update display
         pygame.display.flip()
-        clock.tick(30)  # Control the speed of the animation
+        # Set frame rate to 15 FPS to slow down the animation
+        clock.tick(15)  # Reduced from 60 to 15
 
     pygame.quit()
 
@@ -133,9 +196,9 @@ def draw_entity(screen, entity, color, scale_factor):
     pygame.draw.polygon(screen, color, scaled_corners)
 
     # Draw direction arrow
-    draw_direction_arrow(screen, entity, color=(255, 255, 255), scale_factor=scale_factor)
+    draw_direction_arrow_entity(screen, entity, color=(255, 255, 255), scale_factor=scale_factor)
 
-def draw_direction_arrow(screen, entity, color, scale_factor):
+def draw_direction_arrow_entity(screen, entity, color, scale_factor):
     # Draw an arrow inside the entity to indicate direction
     x, y = entity.get_center_pos()
     x *= scale_factor
@@ -170,6 +233,55 @@ def draw_direction_arrow(screen, entity, color, scale_factor):
 
     # Draw arrowhead
     pygame.draw.polygon(screen, color, [left_wing, (end_x, end_y), right_wing])
+
+def draw_target(screen, target_pos, color, scale_factor):
+    """
+    Draws a point at the target position.
+    :param screen: Pygame screen.
+    :param target_pos: [x, y] position of the target.
+    :param color: Color of the point.
+    :param scale_factor: Scaling factor for visualization.
+    """
+    x, y = target_pos
+    scaled_x = x * scale_factor
+    scaled_y = (FIELD_H - y) * scale_factor  # Adjust y-axis
+    pygame.draw.circle(screen, color, (int(scaled_x), int(scaled_y)), 5)
+
+def draw_direction_arrow(screen, x, y, theta, scale_factor):
+    """
+    Draws a direction arrow at the specified position and orientation.
+    :param screen: Pygame screen.
+    :param x: x-coordinate.
+    :param y: y-coordinate.
+    :param theta: Orientation in degrees.
+    :param scale_factor: Scaling factor for visualization.
+    """
+    # Arrow parameters
+    arrow_length = 20  # Length in pixels
+    arrow_width = 10   # Width of the arrowhead
+
+    theta_rad = math.radians(theta)
+    end_x = x * scale_factor + arrow_length * math.cos(-theta_rad)
+    end_y = (FIELD_H - y) * scale_factor + arrow_length * math.sin(-theta_rad)
+
+    # Draw arrow shaft
+    pygame.draw.line(screen, GREEN, (x * scale_factor, (FIELD_H - y) * scale_factor), (end_x, end_y), 2)
+
+    # Calculate arrowhead points
+    angle = math.atan2(end_y - (FIELD_H - y) * scale_factor, end_x - x * scale_factor)
+    left_wing_angle = angle + math.radians(150)
+    right_wing_angle = angle - math.radians(150)
+    left_wing = (
+        end_x + arrow_width * math.cos(left_wing_angle),
+        end_y + arrow_width * math.sin(left_wing_angle),
+    )
+    right_wing = (
+        end_x + arrow_width * math.cos(right_wing_angle),
+        end_y + arrow_width * math.sin(right_wing_angle),
+    )
+
+    # Draw arrowhead
+    pygame.draw.polygon(screen, GREEN, [left_wing, (end_x, end_y), right_wing])
 
 def interpolate_states(start_state, end_state):
     """

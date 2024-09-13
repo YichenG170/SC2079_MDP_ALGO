@@ -105,3 +105,16 @@ class Field:
 
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
+        
+class State:
+    def __init__(self, x, y, theta, g=0, h=0, parent=None):
+        self.x = x
+        self.y = y
+        self.theta = theta % 360  # Orientation in degrees (0-360)
+        self.g = g          # Cost from start node
+        self.h = h          # Heuristic cost to goal
+        self.f = g + h      # Total cost
+        self.parent = parent  # Parent state in the path
+
+    def __lt__(self, other):  # For priority queue
+        return self.f < other.f

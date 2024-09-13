@@ -4,8 +4,8 @@ from constants import ROBOT_W, ROBOT_H, OBSTACLE_W, OBSTACLE_H
 
 class Robot:
     def __init__(self, pos: list, theta: float) -> None:
-        self.center_pos = pos
-        self.theta = theta  # Orientation in degrees
+        self.center_pos = pos  # [x, y]
+        self.theta = theta      # Orientation in degrees
         self.width = float(ROBOT_W)
         self.height = float(ROBOT_H)
 
@@ -33,10 +33,11 @@ class Robot:
         h = self.get_height()
         theta_rad = math.radians(self.theta)
 
-        # Corner offsets before rotation (relative to center)
-        corners = [(-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)]
-
-        # Rotate corners
+        # Define corners relative to the center
+        corners = [(-w / 2, -h / 2), (w / 2, -h / 2),
+                   (w / 2, h / 2), (-w / 2, h / 2)]
+        
+        # Rotate corners based on current orientation
         rotated_corners = []
         for dx, dy in corners:
             rotated_x = x + dx * math.cos(theta_rad) - dy * math.sin(theta_rad)
@@ -47,8 +48,8 @@ class Robot:
 
 class Obstacle:
     def __init__(self, pos: list, theta: float) -> None:
-        self.center_pos = pos
-        self.theta = theta  # Orientation in degrees
+        self.center_pos = pos  # [x, y]
+        self.theta = theta      # Orientation in degrees
         self.width = float(OBSTACLE_W)
         self.height = float(OBSTACLE_H)
 
@@ -76,10 +77,11 @@ class Obstacle:
         h = self.get_height()
         theta_rad = math.radians(self.theta)
 
-        # Corner offsets before rotation (relative to center)
-        corners = [(-w/2, -h/2), (w/2, -h/2), (w/2, h/2), (-w/2, h/2)]
-
-        # Rotate corners
+        # Define corners relative to the center
+        corners = [(-w / 2, -h / 2), (w / 2, -h / 2),
+                   (w / 2, h / 2), (-w / 2, h / 2)]
+        
+        # Rotate corners based on current orientation
         rotated_corners = []
         for dx, dy in corners:
             rotated_x = x + dx * math.cos(theta_rad) - dy * math.sin(theta_rad)
@@ -90,9 +92,11 @@ class Obstacle:
 
 class Field:
     def __init__(self, r, obs):
-        self.robot = Robot([0, 0], 90)  # Default orientation at 90 degrees (up)
+        self.robot = Robot([0, 0], 90)  # Default position and orientation
         self.obstacles = []
         self.field = [[0] * (2 * r + 1) for _ in range(2 * r + 1)]
+        for obstacle in obs:
+            self.add_obstacle(obstacle)
 
     def get_robot(self):
         return self.robot
@@ -105,16 +109,3 @@ class Field:
 
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
-        
-class State:
-    def __init__(self, x, y, theta, g=0, h=0, parent=None):
-        self.x = x
-        self.y = y
-        self.theta = theta % 360  # Orientation in degrees (0-360)
-        self.g = g          # Cost from start node
-        self.h = h          # Heuristic cost to goal
-        self.f = g + h      # Total cost
-        self.parent = parent  # Parent state in the path
-
-    def __lt__(self, other):  # For priority queue
-        return self.f < other.f

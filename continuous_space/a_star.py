@@ -1,31 +1,42 @@
 # a_star.py
 import math
 import heapq
-from entities import *
-from constants import *
+from entities import Robot, Obstacle, Field
+from constants import FIELD_W, FIELD_H, TURN_RADIUS, SAMPLE_DISTANCE, ACTIONS, MOVE_STEP
+
+class State:
+    def __init__(self, x, y, theta, g=0, h=0, parent=None, action=None):
+        self.x = x                  # Current x position
+        self.y = y                  # Current y position
+        self.theta = theta % 360    # Current orientation in degrees
+        self.g = g                  # Cost from start
+        self.h = h                  # Heuristic cost to goal
+        self.f = g + h              # Total cost
+        self.parent = parent        # Parent state
+        self.action = action        # Action taken to reach this state
+
+    def __lt__(self, other):
+        return self.f < other.f
 
 def a_star_search(field: Field, target_pos: list, target_theta: float):
     robot = field.get_robot()
-    start_pos = robot.get_center_pos()
+    start_x, start_y = robot.get_center_pos()
     start_theta = robot.get_theta()
 
     target_x, target_y = target_pos
     target_theta = target_theta % 360
 
-    # Discretization parameters
-
     open_list = []
     closed_set = set()
 
-    start_state = State(start_pos[0], start_pos[1], start_theta)
+    start_state = State(start_x, start_y, start_theta)
     heapq.heappush(open_list, start_state)
 
     while open_list:
         current_state = heapq.heappop(open_list)
 
-        # Check if goal is reached
+        # Goal check
         if is_goal(current_state, target_x, target_y, target_theta):
-            # Reconstruct path
             return reconstruct_path(current_state)
 
         state_id = (round(current_state.x, 1), round(current_state.y, 1), round(current_state.theta, 1) % 360)
@@ -41,8 +52,8 @@ def a_star_search(field: Field, target_pos: list, target_theta: float):
             if next_state_id in closed_set:
                 continue
 
-            if is_valid(next_state, field):
-                # Compute costs
+            if is_valid(next_state, field, current_state):
+                # Calculate costs
                 next_state.g = current_state.g + movement_cost(current_state, next_state)
                 next_state.h = heuristic(next_state, target_x, target_y, target_theta)
                 next_state.f = next_state.g + next_state.h
@@ -54,9 +65,8 @@ def a_star_search(field: Field, target_pos: list, target_theta: float):
     return None
 
 def is_goal(state, target_x, target_y, target_theta):
-    # Determine if the current state is the goal
     pos_threshold = 1.0    # Position tolerance
-    angle_threshold = 5.0  # Angle tolerance
+    angle_threshold = 5.0  # Orientation tolerance
 
     distance = math.hypot(state.x - target_x, state.y - target_y)
     angle_diff = abs((state.theta - target_theta + 180) % 360 - 180)
@@ -64,188 +74,229 @@ def is_goal(state, target_x, target_y, target_theta):
     return distance <= pos_threshold and angle_diff <= angle_threshold
 
 def reconstruct_path(state):
-    # Reconstruct the path from start to goal
     path = []
     while state:
-        path.append((state.x, state.y, state.theta))
+        path.append((state.x, state.y, state.theta, state.action))
         state = state.parent
-    return path[::-1]  # Reverse the path
+    return path[::-1]  # Reverse the path to start from the beginning
 
 def get_successors(state, field):
     successors = []
-    TURN_RADIUS = 18  # Turning radius for quarter-circle turns
-    STEP_SIZE = 10    # You can adjust this value as needed
+    robot = field.get_robot()
 
-    # Action: Go forward x units
-    new_x = state.x + STEP_SIZE * math.cos(math.radians(state.theta))
-    new_y = state.y + STEP_SIZE * math.sin(math.radians(state.theta))
-    successors.append(State(new_x, new_y, state.theta))
+    for action in ACTIONS:
+        if action == 'GO_FORWARD':
+            new_x, new_y, new_theta = move_forward(state.x, state.y, state.theta, MOVE_STEP)
+            successor = State(new_x, new_y, new_theta, parent=state, action=action)
+            successors.append(successor)
 
-    # Action: Go backward x units
-    back_x = state.x - STEP_SIZE * math.cos(math.radians(state.theta))
-    back_y = state.y - STEP_SIZE * math.sin(math.radians(state.theta))
-    successors.append(State(back_x, back_y, state.theta))
+        elif action == 'GO_BACKWARD':
+            new_x, new_y, new_theta = move_backward(state.x, state.y, state.theta, MOVE_STEP)
+            successor = State(new_x, new_y, new_theta, parent=state, action=action)
+            successors.append(successor)
 
-    # Action: Go left forward (quarter-circle turn)
-    left_forward_state = perform_turn(state, TURN_RADIUS, left=True, forward=True)
-    successors.append(left_forward_state)
-
-    # Action: Go left backward (reverse quarter-circle turn)
-    left_backward_state = perform_turn(state, TURN_RADIUS, left=True, forward=False)
-    successors.append(left_backward_state)
-
-    # Action: Go right forward (quarter-circle turn)
-    right_forward_state = perform_turn(state, TURN_RADIUS, left=False, forward=True)
-    successors.append(right_forward_state)
-
-    # Action: Go right backward (reverse quarter-circle turn)
-    right_backward_state = perform_turn(state, TURN_RADIUS, left=False, forward=False)
-    successors.append(right_backward_state)
+        elif action in ['TURN_LEFT_FORWARD', 'TURN_LEFT_BACKWARD',
+                       'TURN_RIGHT_FORWARD', 'TURN_RIGHT_BACKWARD']:
+            turn_params = parse_turn_action(action)
+            new_x, new_y, new_theta = perform_turn(state.x, state.y, state.theta, turn_params['direction'],
+                                                  turn_params['movement'])
+            successor = State(new_x, new_y, new_theta, parent=state, action=action)
+            successors.append(successor)
 
     return successors
 
-def perform_turn(state, radius, left=True, forward=True):
-    # Determine the center of rotation
-    theta_rad = math.radians(state.theta)
-    dir_multiplier = 1 if forward else -1
-    turn_angle = dir_multiplier * 90  # Quarter-circle turn
+def parse_turn_action(action):
+    """
+    Parses the turn action to extract turning direction and movement direction.
+    """
+    parts = action.split('_')
+    turn_direction = parts[1].lower()  # 'left' or 'right'
+    movement_direction = parts[2].lower()  # 'forward' or 'backward'
+    return {'direction': turn_direction, 'movement': movement_direction}
 
-    if left:
-        center_x = state.x - radius * math.sin(theta_rad)
-        center_y = state.y + radius * math.cos(theta_rad)
-        delta_theta = turn_angle
+def move_forward(x, y, theta, step):
+    theta_rad = math.radians(theta)
+    new_x = x + step * math.cos(theta_rad)
+    new_y = y + step * math.sin(theta_rad)
+    return new_x, new_y, theta
+
+def move_backward(x, y, theta, step):
+    theta_rad = math.radians(theta)
+    new_x = x - step * math.cos(theta_rad)
+    new_y = y - step * math.sin(theta_rad)
+    return new_x, new_y, theta
+
+def perform_turn(x, y, theta, turn_direction, movement_direction):
+    """
+    Performs a quarter-circle turn.
+    :param x: Current x position
+    :param y: Current y position
+    :param theta: Current orientation in degrees
+    :param turn_direction: 'left' or 'right'
+    :param movement_direction: 'forward' or 'backward'
+    :return: New x, y, theta after the turn
+    """
+    theta_rad = math.radians(theta)
+    delta_theta = 90 if turn_direction == 'left' else -90
+    if movement_direction == 'backward':
+        delta_theta = -delta_theta
+
+    # Determine center of rotation
+    if turn_direction == 'left':
+        center_x = x - TURN_RADIUS * math.sin(theta_rad)
+        center_y = y + TURN_RADIUS * math.cos(theta_rad)
     else:
-        center_x = state.x + radius * math.sin(theta_rad)
-        center_y = state.y - radius * math.cos(theta_rad)
-        delta_theta = -turn_angle
+        center_x = x + TURN_RADIUS * math.sin(theta_rad)
+        center_y = y - TURN_RADIUS * math.cos(theta_rad)
 
-    # Calculate the new orientation
-    new_theta = (state.theta + delta_theta) % 360
+    # Calculate new orientation
+    new_theta = (theta + delta_theta) % 360
 
-    # Calculate the new position after the turn
-    angle_start = math.atan2(state.y - center_y, state.x - center_x)
+    # Calculate new position after the quarter-circle turn
+    angle_start = math.atan2(y - center_y, x - center_x)
     angle_end = angle_start + math.radians(delta_theta)
-    new_x = center_x + radius * math.cos(angle_end)
-    new_y = center_y + radius * math.sin(angle_end)
+    new_x = center_x + TURN_RADIUS * math.cos(angle_end)
+    new_y = center_y + TURN_RADIUS * math.sin(angle_end)
 
-    return State(new_x, new_y, new_theta)
+    return new_x, new_y, new_theta
 
 def is_valid(state, field, parent_state=None):
-    # If there's no parent state (start state), just check the current position
+    """
+    Checks if the state is valid (no collision and within boundaries).
+    """
     if parent_state is None:
+        # Start state; just check current position
         return check_collision(state, field)
 
-    # Determine if the movement is a turn or straight
-    angle_diff = abs((state.theta - parent_state.theta + 180) % 360 - 180)
-    if angle_diff == 0:
+    action = state.action
+    if action in ['GO_FORWARD', 'GO_BACKWARD']:
         # Straight movement
         return check_straight_path(parent_state, state, field)
-    else:
+    elif action.startswith('TURN_'):
         # Turning movement
         return check_turning_path(parent_state, state, field)
+    else:
+        return False
 
 def check_straight_path(start_state, end_state, field):
-    # Number of samples along the path
+    """
+    Checks for collisions along a straight path from start to end.
+    """
     distance = math.hypot(end_state.x - start_state.x, end_state.y - start_state.y)
     num_samples = max(1, int(distance / SAMPLE_DISTANCE))
-
-    for i in range(num_samples + 1):
+    for i in range(1, num_samples + 1):
         t = i / num_samples
         x = start_state.x + t * (end_state.x - start_state.x)
         y = start_state.y + t * (end_state.y - start_state.y)
-        theta = start_state.theta
-        temp_state = State(x, y, theta)
+        temp_state = State(x, y, start_state.theta)
         if not check_collision(temp_state, field):
             return False
     return True
 
 def check_turning_path(start_state, end_state, field):
-    # Reconstruct the turn parameters
-    radius = TURN_RADIUS
-    delta_theta = (end_state.theta - start_state.theta + 360) % 360
-    if delta_theta == 0:
-        delta_theta = -((start_state.theta - end_state.theta + 360) % 360)
+    """
+    Checks for collisions along a circular turning path from start to end.
+    """
+    action = end_state.action
+    params = parse_turn_action(action)
+    turn_direction = params['direction']
+    movement_direction = params['movement']
+
     theta_rad = math.radians(start_state.theta)
-    turn_direction = 'left' if delta_theta > 0 else 'right'
-
-    # Determine the center of rotation
     if turn_direction == 'left':
-        center_x = start_state.x - radius * math.sin(theta_rad)
-        center_y = start_state.y + radius * math.cos(theta_rad)
+        center_x = start_state.x - TURN_RADIUS * math.sin(theta_rad)
+        center_y = start_state.y + TURN_RADIUS * math.cos(theta_rad)
     else:
-        center_x = start_state.x + radius * math.sin(theta_rad)
-        center_y = start_state.y - radius * math.cos(theta_rad)
+        center_x = start_state.x + TURN_RADIUS * math.sin(theta_rad)
+        center_y = start_state.y - TURN_RADIUS * math.cos(theta_rad)
 
-    # Number of samples along the arc
-    arc_length = math.radians(abs(delta_theta)) * radius
+    # Determine the direction of angle change
+    delta_theta = 90 if turn_direction == 'left' else -90
+    if movement_direction == 'backward':
+        delta_theta = -delta_theta
+
+    angle_start = math.atan2(start_state.y - center_y, start_state.x - center_x)
+    angle_end = angle_start + math.radians(delta_theta)
+
+    arc_length = abs(delta_theta) * math.pi / 180 * TURN_RADIUS
     num_samples = max(1, int(arc_length / SAMPLE_DISTANCE))
 
-    for i in range(num_samples + 1):
+    for i in range(1, num_samples + 1):
         t = i / num_samples
-        angle = math.radians(start_state.theta) + t * math.radians(delta_theta)
-        x = center_x + radius * math.cos(angle)
-        y = center_y + radius * math.sin(angle)
-        theta = (start_state.theta + t * delta_theta) % 360
-        temp_state = State(x, y, theta)
+        current_angle = angle_start + t * math.radians(delta_theta)
+        x = center_x + TURN_RADIUS * math.cos(current_angle)
+        y = center_y + TURN_RADIUS * math.sin(current_angle)
+        new_theta = (start_state.theta + t * delta_theta) % 360
+        temp_state = State(x, y, new_theta)
         if not check_collision(temp_state, field):
             return False
     return True
 
 def check_collision(state, field):
-    # Check if the robot is within the field boundaries
+    """
+    Checks if the robot at the given state collides with any obstacles or boundaries.
+    """
+    # Check boundaries
     if not (0 <= state.x <= FIELD_W and 0 <= state.y <= FIELD_H):
         return False
 
-    # Temporarily update the robot's position and orientation
     robot = field.get_robot()
     original_pos = robot.get_center_pos()
     original_theta = robot.get_theta()
 
+    # Temporarily update robot's position and orientation
     robot.set_center_pos([state.x, state.y])
     robot.set_theta(state.theta)
 
-    # Get robot corners
+    # Get robot's corners
     robot_corners = robot.get_pos()
 
-    # Check collision with obstacles
-    collision = False
+    # Check collision with all obstacles
     for obstacle in field.get_obstacles():
         obstacle_corners = obstacle.get_pos()
         if polygons_intersect(robot_corners, obstacle_corners):
-            collision = True
-            break
+            # Reset robot's position and orientation
+            robot.set_center_pos(original_pos)
+            robot.set_theta(original_theta)
+            return False
 
     # Reset robot's position and orientation
     robot.set_center_pos(original_pos)
     robot.set_theta(original_theta)
 
-    return not collision
+    return True
 
 def movement_cost(current_state, next_state):
+    """
+    Calculates the movement cost between two states.
+    """
     angle_diff = abs((next_state.theta - current_state.theta + 180) % 360 - 180)
-
     if angle_diff == 0:
         # Straight movement
         distance = math.hypot(next_state.x - current_state.x, next_state.y - current_state.y)
         return distance
     elif angle_diff == 90:
         # Quarter-circle turn
-        arc_length = (math.pi * TURN_RADIUS) / 2  # Quarter of the circumference
+        arc_length = (math.pi * TURN_RADIUS) / 2  # 1/4 of circumference
         return arc_length
     else:
-        # For backward turns or invalid movements
-        return float('inf')  # Penalize invalid or unsupported movements
+        # Unsupported movement
+        return float('inf')
 
 def heuristic(state, target_x, target_y, target_theta):
-    # Estimate cost to reach the goal
+    """
+    Heuristic function estimating the cost from the current state to the goal.
+    Uses Euclidean distance plus orientation difference.
+    """
     distance = math.hypot(state.x - target_x, state.y - target_y)
     angle_diff = abs((state.theta - target_theta + 180) % 360 - 180)
     rotation_cost = (angle_diff / 360.0) * TURN_RADIUS
-
     return distance + rotation_cost
 
 def polygons_intersect(poly1, poly2):
-    # Check if two polygons intersect (using Separating Axis Theorem)
+    """
+    Determines if two convex polygons intersect using the Separating Axis Theorem.
+    """
     def get_axes(polygon):
         axes = []
         for i in range(len(polygon)):

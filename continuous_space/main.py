@@ -11,15 +11,21 @@ def main():
     field = Field(r=100, obs=[])
 
     # Initialize the robot at position (50, 50) facing UP (90 degrees)
-    robot = Robot([50, 50], Direction.UP)
+    robot = Robot([10, 10], Direction.UP)
     field.set_robot(robot)
 
     # Add obstacles to the field
     obstacle1 = Obstacle([100, 100], Direction.UP)
     field.add_obstacle(obstacle1)
 
-    obstacle2 = Obstacle([150, 50], Direction.UP)
+    obstacle2 = Obstacle([150, 50], Direction.DOWN)
     field.add_obstacle(obstacle2)
+    
+    obstacle3 = Obstacle([60, 60], Direction.RIGHT)
+    field.add_obstacle(obstacle3)
+    
+    obstacle4 = Obstacle([10, 100], Direction.RIGHT)
+    field.add_obstacle(obstacle4)
 
     # Define a list of target positions and orientations
     targets = []

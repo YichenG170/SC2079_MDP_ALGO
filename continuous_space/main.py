@@ -47,6 +47,9 @@ def main():
     # Find the optimal path covering all targets
     path = optimal_path(field, targets)
 
+    # add this cus I cant render the path with SNAP
+    path = list(filter(lambda x: x[3] != 'SNAP', path))
+
     if path:
         print("Optimal path found.\n")
         # Compute and print movement commands
@@ -120,7 +123,7 @@ def visualize_path(field, path, targets):
             if event.type == pygame.QUIT:
                 running = False
 
-        if index < path_length - 1:
+        if index < path_length - 2:
             # Interpolate between the current and next state
             current_state = path[index]
             next_state = path[index + 1]
@@ -164,6 +167,12 @@ def visualize_path(field, path, targets):
         # Draw robot
         if robot_positions:
             current_robot_pos = robot_positions.pop(0)
+            if current_robot_pos == "SNAP":
+                draw_entity(screen, robot, RED, scale_factor)
+                pygame.display.flip()
+                pygame.time.wait(100)  # Wait for 100 milliseconds
+                continue
+
             robot_x, robot_y, robot_theta = current_robot_pos[:3]
             robot = field.get_robot()
             robot.set_center_pos([robot_x, robot_y])

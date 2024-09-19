@@ -9,6 +9,9 @@ class Robot:
         self.width = float(ROBOT_W)
         self.height = float(ROBOT_H)
 
+    def __repr__(self):
+        return f"Robot(Position: {self.center_pos}, Orientation: {self.theta})"
+
     def get_center_pos(self) -> list:
         return self.center_pos
 
@@ -52,6 +55,9 @@ class Obstacle:
         self.theta = theta      # Orientation in degrees
         self.width = float(OBSTACLE_W)
         self.height = float(OBSTACLE_H)
+
+    def __repr__(self):
+        return f"Obstacle(Position: {self.center_pos}, Orientation: {self.theta})"
 
     def get_center_pos(self) -> list:
         return self.center_pos
@@ -97,6 +103,9 @@ class Field:
         self.field = [[0] * (2 * r + 1) for _ in range(2 * r + 1)]
         for obstacle in obs:
             self.add_obstacle(obstacle)
+
+    def __repr__(self):
+        return f"Field(Robot: {self.robot}, Obstacles: {self.obstacles})"
 
     def get_robot(self):
         return self.robot

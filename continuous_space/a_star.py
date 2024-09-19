@@ -3,7 +3,7 @@ import math
 import heapq
 from itertools import permutations
 from entities import Robot, Obstacle, Field
-from constants import FIELD_W, FIELD_H, TURN_RADIUS, SAMPLE_DISTANCE, ACTIONS, MOVE_STEP
+from constants import FIELD_W, FIELD_H, TURN_RADIUS, SAMPLE_DISTANCE, ACTIONS, MOVE_STEP, ROTATION_COST
 
 class State:
     def __init__(self, x, y, theta, g=0, h=0, parent=None, action=None):
@@ -275,7 +275,12 @@ def movement_cost(current_state, next_state):
     if angle_diff == 0:
         # Straight movement
         distance = math.hypot(next_state.x - current_state.x, next_state.y - current_state.y)
-        return distance
+        cost = distance
+        if next_state.action in ['TURN_LEFT_FORWARD', 'TURN_LEFT_BACKWARD',
+                             'TURN_RIGHT_FORWARD', 'TURN_RIGHT_BACKWARD']:
+            # Add rotation cost
+            cost += ROTATION_COST
+        return cost
     elif angle_diff == 90:
         # Quarter-circle turn
         arc_length = (math.pi * TURN_RADIUS) / 2  # 1/4 of circumference
@@ -291,7 +296,8 @@ def heuristic(state, target_x, target_y, target_theta):
     """
     distance = math.hypot(state.x - target_x, state.y - target_y)
     angle_diff = abs((state.theta - target_theta + 180) % 360 - 180)
-    rotation_cost = (angle_diff / 360.0) * TURN_RADIUS
+    num_rotations = angle_diff / 90
+    rotation_cost = num_rotations * ROTATION_COST
     return distance + rotation_cost
 
 def polygons_intersect(poly1, poly2):

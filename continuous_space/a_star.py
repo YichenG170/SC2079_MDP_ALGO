@@ -27,6 +27,9 @@ def a_star_search(field: Field, target_pos: list, target_theta: float):
     target_x, target_y = target_pos
     target_theta = target_theta % 360
 
+    # Precompute obstacle projections
+    precompute_obstacle_data(field)
+
     open_list = []
     closed_set = set()
 
@@ -222,10 +225,28 @@ def check_turning_path(start_state, end_state, field):
     robot.set_center_pos(original_pos)
     robot.set_theta(original_theta)
 
-    # Check collision with all obstacles
+    # Build bounding box for the swept area
+    min_x = min(point[0] for point in swept_area)
+    max_x = max(point[0] for point in swept_area)
+    min_y = min(point[1] for point in swept_area)
+    max_y = max(point[1] for point in swept_area)
+
+    # Filter obstacles that are within the bounding box
+    nearby_obstacles = []
     for obstacle in field.get_obstacles():
+        obs_min_x = obstacle.min_x
+        obs_max_x = obstacle.max_x
+        obs_min_y = obstacle.min_y
+        obs_max_y = obstacle.max_y
+
+        if (obs_max_x >= min_x and obs_min_x <= max_x and
+            obs_max_y >= min_y and obs_min_y <= max_y):
+            nearby_obstacles.append(obstacle)
+
+    # Check collision with nearby obstacles
+    for obstacle in nearby_obstacles:
         obstacle_corners = obstacle.get_pos()
-        if polygons_intersect(swept_area, obstacle_corners):
+        if polygons_intersect_optimized(swept_area, obstacle):
             return False
 
     # Also check boundaries
@@ -255,10 +276,27 @@ def check_collision(state, field):
     # Get robot's corners
     robot_corners = robot.get_pos()
 
-    # Check collision with all obstacles
+    # Build bounding box for the robot
+    min_x = min(point[0] for point in robot_corners)
+    max_x = max(point[0] for point in robot_corners)
+    min_y = min(point[1] for point in robot_corners)
+    max_y = max(point[1] for point in robot_corners)
+
+    # Filter obstacles that are within the bounding box
+    nearby_obstacles = []
     for obstacle in field.get_obstacles():
-        obstacle_corners = obstacle.get_pos()
-        if polygons_intersect(robot_corners, obstacle_corners):
+        obs_min_x = obstacle.min_x
+        obs_max_x = obstacle.max_x
+        obs_min_y = obstacle.min_y
+        obs_max_y = obstacle.max_y
+
+        if (obs_max_x >= min_x and obs_min_x <= max_x and
+            obs_max_y >= min_y and obs_min_y <= max_y):
+            nearby_obstacles.append(obstacle)
+
+    # Check collision with nearby obstacles
+    for obstacle in nearby_obstacles:
+        if polygons_intersect_optimized(robot_corners, obstacle):
             # Reset robot's position and orientation
             robot.set_center_pos(original_pos)
             robot.set_theta(original_theta)
@@ -303,32 +341,71 @@ def heuristic(state, target_x, target_y, target_theta):
     rotation_cost = num_rotations * ROTATION_COST
     return distance + rotation_cost
 
-def polygons_intersect(poly1, poly2):
+def precompute_obstacle_data(field):
     """
-    Determines if two convex polygons intersect using the Separating Axis Theorem.
+    Precomputes axes and projections for all obstacles.
     """
-    def get_axes(polygon):
-        axes = []
-        for i in range(len(polygon)):
-            p1 = polygon[i]
-            p2 = polygon[(i + 1) % len(polygon)]
-            edge = [p2[0] - p1[0], p2[1] - p1[1]]
-            normal = [-edge[1], edge[0]]
-            length = math.hypot(normal[0], normal[1])
-            axes.append([normal[0] / length, normal[1] / length])
-        return axes
+    for obstacle in field.get_obstacles():
+        obstacle_corners = obstacle.get_pos()
+        obstacle.axes = get_axes(obstacle_corners)
+        obstacle.projections = {}
+        for axis in obstacle.axes:
+            projection = project_polygon(axis, obstacle_corners)
+            obstacle.projections[tuple(axis)] = projection
 
-    def project_polygon(axis, polygon):
-        dots = [point[0] * axis[0] + point[1] * axis[1] for point in polygon]
-        return [min(dots), max(dots)]
+        # Precompute bounding box for obstacle
+        xs = [point[0] for point in obstacle_corners]
+        ys = [point[1] for point in obstacle_corners]
+        obstacle.min_x = min(xs)
+        obstacle.max_x = max(xs)
+        obstacle.min_y = min(ys)
+        obstacle.max_y = max(ys)
 
-    axes = get_axes(poly1) + get_axes(poly2)
+def polygons_intersect_optimized(poly1, obstacle):
+    """
+    Optimized polygon intersection using precomputed obstacle data.
+    """
+    # poly1 is the robot's polygon or swept area
+    axes = get_axes(poly1)
+
+    # Add obstacle's precomputed axes
+    axes += obstacle.axes
+
     for axis in axes:
         proj1 = project_polygon(axis, poly1)
-        proj2 = project_polygon(axis, poly2)
+        # Use precomputed projection for the obstacle if available
+        axis_key = tuple(axis)
+        if axis_key in obstacle.projections:
+            proj2 = obstacle.projections[axis_key]
+        else:
+            # Should not happen, but recalculate if necessary
+            proj2 = project_polygon(axis, obstacle.get_pos())
+            obstacle.projections[axis_key] = proj2  # Cache it
+
         if proj1[1] < proj2[0] or proj2[1] < proj1[0]:
             return False
     return True
+
+def get_axes(polygon):
+    """
+    Computes the axes (normals to edges) for a polygon.
+    """
+    axes = []
+    for i in range(len(polygon)):
+        p1 = polygon[i]
+        p2 = polygon[(i + 1) % len(polygon)]
+        edge = [p2[0] - p1[0], p2[1] - p1[1]]
+        normal = [-edge[1], edge[0]]
+        length = math.hypot(normal[0], normal[1])
+        axes.append([normal[0] / length, normal[1] / length])
+    return axes
+
+def project_polygon(axis, polygon):
+    """
+    Projects a polygon onto an axis.
+    """
+    dots = [point[0] * axis[0] + point[1] * axis[1] for point in polygon]
+    return [min(dots), max(dots)]
 
 def compute_convex_hull(points):
     """
@@ -337,6 +414,9 @@ def compute_convex_hull(points):
     """
     # Convert points to tuples and eliminate duplicates
     points = sorted(set(map(tuple, points)))
+
+    if len(points) <= 1:
+        return [list(point) for point in points]
 
     # Build the lower and upper parts of the convex hull
     lower = []
@@ -355,7 +435,7 @@ def compute_convex_hull(points):
     # Last point of each list is omitted because it is repeated
     convex_hull = lower[:-1] + upper[:-1]
 
-    # Convert points back to lists if needed
+    # Convert points back to lists
     convex_hull = [list(point) for point in convex_hull]
     return convex_hull
 

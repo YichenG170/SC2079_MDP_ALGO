@@ -1,9 +1,9 @@
-# a_star.py
 import math
 import heapq
 from itertools import permutations
+from functools import cache  # Use functools.lru_cache for Python versions < 3.9
 from entities import Robot, Obstacle, Field
-from constants import FIELD_W, FIELD_H, TURN_RADIUS, SAMPLE_DISTANCE, ACTIONS, MOVE_STEP, ROTATION_COST
+from constants import *
 
 class State:
     def __init__(self, x, y, theta, g=0, h=0, parent=None, action=None):
@@ -18,6 +18,13 @@ class State:
 
     def __lt__(self, other):
         return self.f < other.f
+
+    def __hash__(self):
+        return hash((round(self.x, 1), round(self.y, 1), round(self.theta, 1)))
+
+    def __eq__(self, other):
+        return (round(self.x, 1), round(self.y, 1), round(self.theta, 1)) == \
+               (round(other.x, 1), round(other.y, 1), round(other.theta, 1))
 
 def a_star_search(field: Field, target_pos: list, target_theta: float):
     robot = field.get_robot()
@@ -43,17 +50,15 @@ def a_star_search(field: Field, target_pos: list, target_theta: float):
         if is_goal(current_state, target_x, target_y, target_theta):
             return reconstruct_path(current_state)
 
-        state_id = (round(current_state.x, 1), round(current_state.y, 1), round(current_state.theta, 1) % 360)
-        if state_id in closed_set:
+        if current_state in closed_set:
             continue
-        closed_set.add(state_id)
+        closed_set.add(current_state)
 
         # Generate successors
         successors = get_successors(current_state, field)
 
         for next_state in successors:
-            next_state_id = (round(next_state.x, 1), round(next_state.y, 1), round(next_state.theta, 1) % 360)
-            if next_state_id in closed_set:
+            if next_state in closed_set:
                 continue
 
             if is_valid(next_state, field, current_state):
@@ -69,7 +74,7 @@ def a_star_search(field: Field, target_pos: list, target_theta: float):
     return None
 
 def is_goal(state, target_x, target_y, target_theta):
-    pos_threshold = 1.0    # Position tolerance
+    pos_threshold = GOAL_THRESHOLD   # Position tolerance
     angle_threshold = 5.0  # Orientation tolerance
 
     distance = math.hypot(state.x - target_x, state.y - target_y)
@@ -133,12 +138,6 @@ def move_backward(x, y, theta, step):
 def perform_turn(x, y, theta, turn_direction, movement_direction):
     """
     Performs a quarter-circle turn.
-    :param x: Current x position
-    :param y: Current y position
-    :param theta: Current orientation in degrees
-    :param turn_direction: 'left' or 'right'
-    :param movement_direction: 'forward' or 'backward'
-    :return: New x, y, theta after the turn
     """
     theta_rad = math.radians(theta)
     delta_theta = 90 if turn_direction == 'left' else -90
@@ -217,6 +216,7 @@ def check_turning_path(start_state, end_state, field):
 
     # Collect all corners
     all_corners = start_corners + end_corners
+    all_corners = tuple(map(tuple, all_corners))  # Make hashable
 
     # Compute convex hull
     swept_area = compute_convex_hull(all_corners)
@@ -245,12 +245,10 @@ def check_turning_path(start_state, end_state, field):
 
     # Check collision with nearby obstacles
     for obstacle in nearby_obstacles:
-        obstacle_corners = obstacle.get_pos()
-        if polygons_intersect_optimized(swept_area, obstacle):
+        if polygons_intersect_optimized(tuple(swept_area), obstacle):
             return False
 
     # Also check boundaries
-    # Since robot's swept area might extend outside the field
     for point in swept_area:
         if not (0 <= point[0] <= FIELD_W and 0 <= point[1] <= FIELD_H):
             return False
@@ -275,6 +273,7 @@ def check_collision(state, field):
 
     # Get robot's corners
     robot_corners = robot.get_pos()
+    robot_corners = tuple(map(tuple, robot_corners))  # Make hashable
 
     # Build bounding box for the robot
     min_x = min(point[0] for point in robot_corners)
@@ -346,12 +345,13 @@ def precompute_obstacle_data(field):
     Precomputes axes and projections for all obstacles.
     """
     for obstacle in field.get_obstacles():
-        obstacle_corners = obstacle.get_pos()
+        obstacle_corners = tuple(map(tuple, obstacle.get_pos()))
         obstacle.axes = get_axes(obstacle_corners)
         obstacle.projections = {}
         for axis in obstacle.axes:
+            axis_key = axis_key_func(axis)
             projection = project_polygon(axis, obstacle_corners)
-            obstacle.projections[tuple(axis)] = projection
+            obstacle.projections[axis_key] = projection
 
         # Precompute bounding box for obstacle
         xs = [point[0] for point in obstacle_corners]
@@ -361,31 +361,36 @@ def precompute_obstacle_data(field):
         obstacle.min_y = min(ys)
         obstacle.max_y = max(ys)
 
+def axis_key_func(axis):
+    scale_factor = 1e5
+    return (int(round(axis[0] * scale_factor)), int(round(axis[1] * scale_factor)))
+
 def polygons_intersect_optimized(poly1, obstacle):
     """
     Optimized polygon intersection using precomputed obstacle data.
     """
-    # poly1 is the robot's polygon or swept area
+    # poly1 is the robot's polygon or swept area (tuple of points)
     axes = get_axes(poly1)
 
     # Add obstacle's precomputed axes
     axes += obstacle.axes
 
     for axis in axes:
+        key = axis_key_func(axis)
         proj1 = project_polygon(axis, poly1)
-        # Use precomputed projection for the obstacle if available
-        axis_key = tuple(axis)
-        if axis_key in obstacle.projections:
-            proj2 = obstacle.projections[axis_key]
-        else:
-            # Should not happen, but recalculate if necessary
-            proj2 = project_polygon(axis, obstacle.get_pos())
-            obstacle.projections[axis_key] = proj2  # Cache it
+        # Use precomputed projection for the obstacle
+        proj2 = obstacle.projections.get(key)
+        if proj2 is None:
+            # Should not happen if precompute_obstacle_data is correct
+            obstacle_corners = tuple(map(tuple, obstacle.get_pos()))
+            proj2 = project_polygon(axis, obstacle_corners)
+            obstacle.projections[key] = proj2  # Cache it
 
         if proj1[1] < proj2[0] or proj2[1] < proj1[0]:
             return False
     return True
 
+@cache
 def get_axes(polygon):
     """
     Computes the axes (normals to edges) for a polygon.
@@ -397,26 +402,29 @@ def get_axes(polygon):
         edge = [p2[0] - p1[0], p2[1] - p1[1]]
         normal = [-edge[1], edge[0]]
         length = math.hypot(normal[0], normal[1])
-        axes.append([normal[0] / length, normal[1] / length])
-    return axes
+        normalized_axis = (normal[0] / length, normal[1] / length)
+        axes.append(normalized_axis)
+    return tuple(axes)
 
+@cache
 def project_polygon(axis, polygon):
     """
     Projects a polygon onto an axis.
     """
     dots = [point[0] * axis[0] + point[1] * axis[1] for point in polygon]
-    return [min(dots), max(dots)]
+    return (min(dots), max(dots))
 
+@cache
 def compute_convex_hull(points):
     """
     Computes the convex hull of a set of 2D points using the monotone chain algorithm.
-    Returns the convex hull as a list of points in counter-clockwise order.
+    Returns the convex hull as a tuple of points in counter-clockwise order.
     """
     # Convert points to tuples and eliminate duplicates
-    points = sorted(set(map(tuple, points)))
+    points = sorted(set(points))
 
     if len(points) <= 1:
-        return [list(point) for point in points]
+        return points
 
     # Build the lower and upper parts of the convex hull
     lower = []
@@ -435,14 +443,17 @@ def compute_convex_hull(points):
     # Last point of each list is omitted because it is repeated
     convex_hull = lower[:-1] + upper[:-1]
 
-    # Convert points back to lists
-    convex_hull = [list(point) for point in convex_hull]
-    return convex_hull
+    return tuple(convex_hull)
 
+@cache
 def cross(o, a, b):
     """
     2D cross product of OA and OB vectors, i.e., z-component of (OA x OB).
-    Returns positive value if OAB makes a counter-clockwise turn,
-    negative for a clockwise turn, and zero if the points are colinear.
     """
     return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+def tuple_map(points):
+    """
+    Converts a list of points to a tuple of tuples to make them hashable.
+    """
+    return tuple(map(tuple, points))

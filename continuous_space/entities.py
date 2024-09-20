@@ -36,16 +36,26 @@ class Robot:
         h = self.get_height()
         theta_rad = math.radians(self.theta)
 
+        cos_theta = math.cos(theta_rad)
+        sin_theta = math.sin(theta_rad)
+        w_2 = w / 2
+        h_2 = h / 2
+
         # Define corners relative to the center
-        corners = [(-w / 2, -h / 2), (w / 2, -h / 2),
-                   (w / 2, h / 2), (-w / 2, h / 2)]
-        
+        corners = [(-w_2, -h_2), (w_2, -h_2), (w_2, h_2), (-w_2, h_2)]
+
+        # Precompute the rotation matrix
+        rotation_matrix = [
+            [cos_theta, -sin_theta],
+            [sin_theta, cos_theta]
+        ]
+
         # Rotate corners based on current orientation
         rotated_corners = []
         for dx, dy in corners:
-            rotated_x = x + dx * math.cos(theta_rad) - dy * math.sin(theta_rad)
-            rotated_y = y + dx * math.sin(theta_rad) + dy * math.cos(theta_rad)
-            rotated_corners.append([rotated_x, rotated_y])
+            rotated_x = x + dx * rotation_matrix[0][0] + dy * rotation_matrix[0][1]
+            rotated_y = y + dx * rotation_matrix[1][0] + dy * rotation_matrix[1][1]
+            rotated_corners.append((rotated_x, rotated_y))
 
         return rotated_corners
 
@@ -84,17 +94,17 @@ class Obstacle:
         theta_rad = math.radians(self.theta)
 
         # Define corners relative to the center
-        corners = [(-w / 2, -h / 2), (w / 2, -h / 2),
-                   (w / 2, h / 2), (-w / 2, h / 2)]
+        corners = ((-w / 2, -h / 2), (w / 2, -h / 2),
+                   (w / 2, h / 2), (-w / 2, h / 2))
         
         # Rotate corners based on current orientation
         rotated_corners = []
         for dx, dy in corners:
             rotated_x = x + dx * math.cos(theta_rad) - dy * math.sin(theta_rad)
             rotated_y = y + dx * math.sin(theta_rad) + dy * math.cos(theta_rad)
-            rotated_corners.append([rotated_x, rotated_y])
+            rotated_corners.append((rotated_x, rotated_y))
 
-        return rotated_corners
+        return tuple(rotated_corners)
 
 class Field:
     def __init__(self, r, obs):

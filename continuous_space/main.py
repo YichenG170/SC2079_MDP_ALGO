@@ -14,10 +14,10 @@ def main():
     field.set_robot(robot)
 
     # Add obstacles to the field
-    obstacle1 = Obstacle([100, 100], Direction.UP)
+    obstacle1 = Obstacle([100, 100], Direction.DOWN)
     field.add_obstacle(obstacle1)
 
-    obstacle2 = Obstacle([150, 50], Direction.DOWN)
+    obstacle2 = Obstacle([150, 50], Direction.UP)
     field.add_obstacle(obstacle2)
     
     obstacle3 = Obstacle([60, 60], Direction.RIGHT)
@@ -50,7 +50,8 @@ def main():
     path = optimal_path(field, targets)
 
     # add this cus I cant render the path with SNAP
-    path = list(filter(lambda x: x[3] != 'SNAP', path))
+    if path is not None:
+        path = list(filter(lambda x: x[3] != 'SNAP', path))
 
     if path:
         print("Optimal path found.\n")
@@ -93,14 +94,6 @@ def visualize_path(field, path, targets):
     pygame.display.set_caption("Robot Path Visualization")
     # Reduced frame rate to slow down the animation
     clock = pygame.time.Clock()
-
-    # Colors
-    WHITE = (255, 255, 255)
-    BLACK = (0, 0, 0)
-    BLUE = (0, 0, 255)
-    LIGHT_GREY = (200, 200, 200)
-    RED = (255, 0, 0)
-    GREEN = (0, 255, 0)
 
     # Load obstacles
     obstacles = field.get_obstacles()
@@ -186,7 +179,7 @@ def visualize_path(field, path, targets):
                 target_pos, target_theta = target
                 distance = math.hypot(robot_x - target_pos[0], robot_y - target_pos[1])
                 angle_diff = abs((robot_theta - target_theta + 180) % 360 - 180)
-                if distance <= 1.0 and angle_diff <= 5.0:
+                if distance <= GOAL_THRESHOLD and angle_diff <= 5.0:
                     # Target reached
                     reached_targets.append(target)
                     remaining_targets.remove(target)

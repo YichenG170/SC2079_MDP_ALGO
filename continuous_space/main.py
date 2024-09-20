@@ -1,5 +1,4 @@
 # main.py
-
 import math
 import pygame
 from optimal_path import optimal_path

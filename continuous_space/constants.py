@@ -27,6 +27,8 @@ OBSTACLE_H = 10
 FIELD_W = 200
 FIELD_H = 200
 
+CELL_SIZE = 10
+
 TURN_RADIUS = 18  # Fixed turning radius for quarter-circle turns
 
 # Sampling for collision detection
@@ -48,3 +50,4 @@ BLUE = (0, 0, 255)
 LIGHT_GREY = (200, 200, 200)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
+DARK_GREY = (100, 100, 100)

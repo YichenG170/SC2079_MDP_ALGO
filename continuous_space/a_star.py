@@ -198,39 +198,42 @@ def check_turning_path(start_state, end_state, field):
     """
     Checks for collisions along a circular turning path from start to end.
     """
-    action = end_state.action
-    params = parse_turn_action(action)
-    turn_direction = params['direction']
-    movement_direction = params['movement']
+    robot = field.get_robot()
+    original_pos = robot.get_center_pos()
+    original_theta = robot.get_theta()
 
-    theta_rad = math.radians(start_state.theta)
-    if turn_direction == 'left':
-        center_x = start_state.x - TURN_RADIUS * math.sin(theta_rad)
-        center_y = start_state.y + TURN_RADIUS * math.cos(theta_rad)
-    else:
-        center_x = start_state.x + TURN_RADIUS * math.sin(theta_rad)
-        center_y = start_state.y - TURN_RADIUS * math.cos(theta_rad)
+    # Get robot's corners at start position
+    robot.set_center_pos([start_state.x, start_state.y])
+    robot.set_theta(start_state.theta)
+    start_corners = robot.get_pos()
 
-    # Determine the direction of angle change
-    delta_theta = 90 if turn_direction == 'left' else -90
-    if movement_direction == 'backward':
-        delta_theta = -delta_theta
+    # Get robot's corners at end position
+    robot.set_center_pos([end_state.x, end_state.y])
+    robot.set_theta(end_state.theta)
+    end_corners = robot.get_pos()
 
-    angle_start = math.atan2(start_state.y - center_y, start_state.x - center_x)
-    angle_end = angle_start + math.radians(delta_theta)
+    # Collect all corners
+    all_corners = start_corners + end_corners
 
-    arc_length = abs(delta_theta) * math.pi / 180 * TURN_RADIUS
-    num_samples = max(1, int(arc_length / SAMPLE_DISTANCE))
+    # Compute convex hull
+    swept_area = compute_convex_hull(all_corners)
 
-    for i in range(1, num_samples + 1):
-        t = i / num_samples
-        current_angle = angle_start + t * math.radians(delta_theta)
-        x = center_x + TURN_RADIUS * math.cos(current_angle)
-        y = center_y + TURN_RADIUS * math.sin(current_angle)
-        theta = (start_state.theta + t * delta_theta) % 360
-        temp_state = State(x, y, theta)
-        if not check_collision(temp_state, field):
+    # Reset robot's position and orientation
+    robot.set_center_pos(original_pos)
+    robot.set_theta(original_theta)
+
+    # Check collision with all obstacles
+    for obstacle in field.get_obstacles():
+        obstacle_corners = obstacle.get_pos()
+        if polygons_intersect(swept_area, obstacle_corners):
             return False
+
+    # Also check boundaries
+    # Since robot's swept area might extend outside the field
+    for point in swept_area:
+        if not (0 <= point[0] <= FIELD_W and 0 <= point[1] <= FIELD_H):
+            return False
+
     return True
 
 def check_collision(state, field):
@@ -277,7 +280,7 @@ def movement_cost(current_state, next_state):
         distance = math.hypot(next_state.x - current_state.x, next_state.y - current_state.y)
         cost = distance
         if next_state.action in ['TURN_LEFT_FORWARD', 'TURN_LEFT_BACKWARD',
-                             'TURN_RIGHT_FORWARD', 'TURN_RIGHT_BACKWARD']:
+                                 'TURN_RIGHT_FORWARD', 'TURN_RIGHT_BACKWARD']:
             # Add rotation cost
             cost += ROTATION_COST
         return cost
@@ -326,3 +329,40 @@ def polygons_intersect(poly1, poly2):
         if proj1[1] < proj2[0] or proj2[1] < proj1[0]:
             return False
     return True
+
+def compute_convex_hull(points):
+    """
+    Computes the convex hull of a set of 2D points using the monotone chain algorithm.
+    Returns the convex hull as a list of points in counter-clockwise order.
+    """
+    # Convert points to tuples and eliminate duplicates
+    points = sorted(set(map(tuple, points)))
+
+    # Build the lower and upper parts of the convex hull
+    lower = []
+    for p in points:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+
+    upper = []
+    for p in reversed(points):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+
+    # Concatenate lower and upper to get full hull
+    # Last point of each list is omitted because it is repeated
+    convex_hull = lower[:-1] + upper[:-1]
+
+    # Convert points back to lists if needed
+    convex_hull = [list(point) for point in convex_hull]
+    return convex_hull
+
+def cross(o, a, b):
+    """
+    2D cross product of OA and OB vectors, i.e., z-component of (OA x OB).
+    Returns positive value if OAB makes a counter-clockwise turn,
+    negative for a clockwise turn, and zero if the points are colinear.
+    """
+    return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])

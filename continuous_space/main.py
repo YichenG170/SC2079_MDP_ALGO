@@ -25,6 +25,9 @@ def main():
     
     obstacle4 = Obstacle([10, 100], Direction.RIGHT)
     field.add_obstacle(obstacle4)
+    
+    obstacle5 = Obstacle([150, 150], Direction.LEFT)
+    field.add_obstacle(obstacle5)
 
     # Define a list of target positions and orientations
     targets = []

@@ -18,14 +18,14 @@ def main():
     obstacle1 = Obstacle([100, 100], Direction.UP)
     field.add_obstacle(obstacle1)
 
-    #obstacle2 = Obstacle([150, 50], Direction.DOWN)
-    #field.add_obstacle(obstacle2)
+    obstacle2 = Obstacle([150, 50], Direction.DOWN)
+    field.add_obstacle(obstacle2)
     
-    #obstacle3 = Obstacle([60, 60], Direction.RIGHT)
-    #field.add_obstacle(obstacle3)
+    obstacle3 = Obstacle([60, 60], Direction.RIGHT)
+    field.add_obstacle(obstacle3)
     
-    #obstacle4 = Obstacle([10, 100], Direction.RIGHT)
-    #field.add_obstacle(obstacle4)
+    obstacle4 = Obstacle([10, 100], Direction.RIGHT)
+    field.add_obstacle(obstacle4)
 
     # Define a list of target positions and orientations
     targets = []

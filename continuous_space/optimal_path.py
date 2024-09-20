@@ -55,6 +55,7 @@ def optimal_path(field: Field, targets: list):
 
             # Append the segment to the combined path
             combined_path.extend(path_segment)
+            combined_path.extend([(0, 0, 0, 'SNAP')])  # Add a snapshot action between segments
 
             # Update the robot's position and orientation for the next segment
             last_state = path_segment[-1]

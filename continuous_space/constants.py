@@ -50,6 +50,9 @@ OBSERVATION_DISTANCE = 15 + ROBOT_H / 2
 # Rotation cost
 ROTATION_COST = 100
 
+# Core number
+CORE_NUM = 3
+
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)

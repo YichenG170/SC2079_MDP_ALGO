@@ -1,6 +1,6 @@
 import cProfile
 
-from optimal_path import *
+from optimal_path_2 import *
 # import math
 # import itertools
 from a_star import a_star_search

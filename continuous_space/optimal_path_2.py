@@ -3,7 +3,7 @@
 import math
 from a_star import a_star_search
 from entities import Field, Robot, Obstacle
-from constants import TURN_RADIUS
+from constants import *
 import multiprocess as mp
 
 def optimal_path(field: Field, targets: list):
@@ -44,7 +44,7 @@ def optimal_path(field: Field, targets: list):
     pairwise_paths = {}
     pairwise_costs = {}
     # pool = mp.Pool(mp.cpu_count())
-    pool = mp.Pool(4)
+    pool = mp.Pool(CORE_NUM)
 
     tasks = [(i, j, nodes, clone_field(field)) for i in range(len(nodes)) for j in range(len(nodes)) if i != j]
     results = pool.map(compute_path_cost, tasks)

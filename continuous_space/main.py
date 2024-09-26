@@ -6,7 +6,7 @@
 
 import math
 import pygame
-from optimal_path import optimal_path
+from optimal_path_2 import optimal_path
 from entities import Field, Robot, Obstacle
 from constants import *
 

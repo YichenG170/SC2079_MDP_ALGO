@@ -34,6 +34,15 @@ def initialize():
     obstacle5 = Obstacle([150, 150], Direction.LEFT)
     field.add_obstacle(obstacle5)
     
+    obstacle6 = Obstacle([175, 175], Direction.DOWN)
+    field.add_obstacle(obstacle6)
+    
+    obstacle7 = Obstacle([125, 20], Direction.LEFT)
+    field.add_obstacle(obstacle7)
+    
+    obstacle8 = Obstacle([50, 150], Direction.RIGHT)
+    field.add_obstacle(obstacle8)
+    
     return field
 
 def main(field):

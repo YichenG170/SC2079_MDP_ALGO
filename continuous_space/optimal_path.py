@@ -1,72 +1,87 @@
 # optimal_path.py
 
 import math
-import itertools
 from a_star import a_star_search
 from entities import Field, Robot, Obstacle
-from constants import FIELD_W, FIELD_H, TURN_RADIUS, SAMPLE_DISTANCE, ACTIONS, MOVE_STEP
+from constants import TURN_RADIUS
 
 def optimal_path(field: Field, targets: list):
     """
-    Finds the optimal order to visit all targets and returns the combined path.
+    Finds an efficient path to visit all targets using the Nearest Neighbor heuristic.
 
     :param field: The Field object containing the robot and obstacles.
     :param targets: A list of tuples, each containing a target position [x, y] and orientation theta.
                     Example: [([100, 100], 90), ([150, 150], 0)]
-    :return: A list representing the combined path to visit all targets in the optimal order.
+    :return: A list representing the combined path to visit all targets.
              Each element in the list is a tuple: (x, y, theta, action)
     """
     if not targets:
         return []
 
-    # Generate all possible permutations of the target order
-    permutations = list(itertools.permutations(targets))
-    
-    optimal_combined_path = None
-    minimal_total_cost = float('inf')
+    # Include the robot's starting position as a node
+    start_pos = field.get_robot().get_center_pos()
+    start_theta = field.get_robot().get_theta()
+    nodes = [({'pos': start_pos, 'theta': start_theta, 'id': 'start'})]
+    for idx, target in enumerate(targets):
+        nodes.append({'pos': target[0], 'theta': target[1], 'id': idx})
 
-    # Iterate through each permutation to find the one with the minimal total cost
-    for perm in permutations:
-        combined_path = []
-        total_cost = 0.0
-        temp_field = clone_field(field)
-        temp_robot = temp_field.get_robot()
-        temp_robot_pos = temp_robot.get_center_pos()
-        temp_robot_theta = temp_robot.get_theta()
+    # Precompute shortest paths and costs between all pairs of nodes
+    pairwise_paths = {}
+    pairwise_costs = {}
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
+            if i != j:
+                key = (nodes[i]['id'], nodes[j]['id'])
+                # Clone the field to avoid modifying the original
+                temp_field = clone_field(field)
+                temp_field.get_robot().set_center_pos(nodes[i]['pos'])
+                temp_field.get_robot().set_theta(nodes[i]['theta'])
+                path = a_star_search(temp_field, nodes[j]['pos'], nodes[j]['theta'])
+                if path is not None:
+                    cost = calculate_path_cost(path)
+                    pairwise_paths[key] = path
+                    pairwise_costs[key] = cost
+                else:
+                    # If no path exists, set cost to infinity
+                    pairwise_costs[key] = float('inf')
 
-        success = True  # Flag to check if all segments are reachable
+    # Apply Nearest Neighbor heuristic
+    unvisited = set([node['id'] for node in nodes if node['id'] != 'start'])
+    current_id = 'start'
+    combined_path = []
+    total_cost = 0.0
 
-        for idx, target in enumerate(perm):
-            target_pos, target_theta = target
-            path_segment = a_star_search(temp_field, target_pos, target_theta)
+    while unvisited:
+        # Find the nearest unvisited node
+        nearest_node = None
+        min_cost = float('inf')
+        for node_id in unvisited:
+            cost = pairwise_costs.get((current_id, node_id), float('inf'))
+            if cost < min_cost:
+                min_cost = cost
+                nearest_node = node_id
 
-            if path_segment is None:
-                # If any segment is unreachable, skip this permutation
-                success = False
-                break
+        if nearest_node is None or min_cost == float('inf'):
+            # No reachable unvisited nodes
+            print("Some targets are unreachable.")
+            return None
 
-            if idx > 0:
-                # Skip the first state to avoid duplication of the last state from the previous segment
-                path_segment = path_segment[1:]
+        # Append the path to the combined path
+        path_segment = pairwise_paths[(current_id, nearest_node)]
+        if combined_path:
+            # Skip the first state to avoid duplication
+            path_segment = path_segment[1:]
 
-            # Calculate the cost of this segment
-            segment_cost = calculate_path_cost(path_segment)
-            total_cost += segment_cost
+        combined_path.extend(path_segment)
+        combined_path.append((0, 0, 0, 'SNAP'))
 
-            # Append the segment to the combined path
-            combined_path.extend(path_segment)
-            combined_path.extend([(0, 0, 0, 'SNAP')])
+        # Update total cost and current position
+        total_cost += min_cost
+        current_id = nearest_node
+        unvisited.remove(nearest_node)
 
-            # Update the robot's position and orientation for the next segment
-            last_state = path_segment[-1]
-            temp_robot.set_center_pos([last_state[0], last_state[1]])
-            temp_robot.set_theta(last_state[2])
-
-        if success and total_cost < minimal_total_cost:
-            minimal_total_cost = total_cost
-            optimal_combined_path = combined_path
-
-    return optimal_combined_path
+    print(f"Total path cost: {total_cost}")
+    return combined_path
 
 def clone_field(field: Field) -> Field:
     """

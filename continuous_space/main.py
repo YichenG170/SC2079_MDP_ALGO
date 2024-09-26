@@ -1,16 +1,21 @@
 # main.py
+
+# computes the shortest distance by calling main(field)
+# initialization of field needed before calling the main function
+# see details in intialize()
+
 import math
 import pygame
 from optimal_path import optimal_path
 from entities import Field, Robot, Obstacle
 from constants import *
 
-def main():
+def initialize():
     # Initialize the field with a radius and no initial obstacles
     field = Field(r=100, obs=[])
 
     # Initialize the robot at position (50, 50) facing UP (90 degrees)
-    robot = Robot([10, 10], Direction.UP)
+    robot = Robot([10, 12], Direction.UP)
     field.set_robot(robot)
 
     # Add obstacles to the field
@@ -28,8 +33,32 @@ def main():
     
     obstacle5 = Obstacle([150, 150], Direction.LEFT)
     field.add_obstacle(obstacle5)
+    
+    return field
 
+def main(field):
     # Define a list of target positions and orientations
+    targets = get_target_positions(field)
+
+    # Find the optimal path covering all targets
+    path = optimal_path(field, targets)
+
+    # add this cus I cant render the path with SNAP
+    if path is not None:
+        path = list(filter(lambda x: x[3] != 'SNAP', path))
+
+    if path:
+        print("Optimal path found.\n")
+        # Compute and print movement commands
+        compute_and_print_commands(path)
+        # Visualize the path using Pygame, passing the list of targets
+        # --------------------uncomment here to visualize the path--------------------
+        visualize_path(field, path, targets)
+        # ----------------------------------------------------------------------------
+    else:
+        print("No path found.")
+        
+def get_target_positions(field):
     targets = []
     
     obstacles = field.get_obstacles()
@@ -45,22 +74,8 @@ def main():
             targets.append(((x - OBSERVATION_DISTANCE - 1, y), Direction.RIGHT))
         elif d == Direction.RIGHT:
             targets.append(((x + OBSERVATION_DISTANCE + 1, y), Direction.LEFT))
-
-    # Find the optimal path covering all targets
-    path = optimal_path(field, targets)
-
-    # add this cus I cant render the path with SNAP
-    if path is not None:
-        path = list(filter(lambda x: x[3] != 'SNAP', path))
-
-    if path:
-        print("Optimal path found.\n")
-        # Compute and print movement commands
-        compute_and_print_commands(path)
-        # Visualize the path using Pygame, passing the list of targets
-        visualize_path(field, path, targets)
-    else:
-        print("No path found.")
+            
+    return targets
 
 def compute_and_print_commands(path):
     print("Commands:")
@@ -118,7 +133,7 @@ def visualize_path(field, path, targets):
             if event.type == pygame.QUIT:
                 running = False
 
-        if index < path_length - 2:
+        if index < path_length - 1:
             # Interpolate between the current and next state
             current_state = path[index]
             next_state = path[index + 1]
@@ -349,4 +364,5 @@ def interpolate_states(start_state, end_state):
     return positions
 
 if __name__ == "__main__":
-    main()
+    field = initialize()
+    main(field)

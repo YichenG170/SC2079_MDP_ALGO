@@ -43,7 +43,9 @@ def optimal_path(field: Field, targets: list):
 
     pairwise_paths = {}
     pairwise_costs = {}
+    # pool = mp.Pool(mp.cpu_count())
     pool = mp.Pool(4)
+
     tasks = [(i, j, nodes, clone_field(field)) for i in range(len(nodes)) for j in range(len(nodes)) if i != j]
     results = pool.map(compute_path_cost, tasks)
     pool.close()

@@ -144,14 +144,20 @@ def map_to_inst(json_input):
     commands = []
     for command in temp_commands:
         act = ""
-        match command["action"]:
-            case "GO_FORWARD": act = "FW"
-            case "GO_BACKWARD": act = "BW"
-            case "TURN_LEFT_FORWARD": act = "FL"
-            case "TURN_RIGHT_FORWARD": act = "FR"
-            case "TURN_LEFT_BACKWARD": act = "BL"
-            case "TURN_RIGHT_BACKWARD": act = "BR"
-            case "SNAP": act = "SNAP"
+        if command["action"] == "GO_FORWARD":
+            act = "FW"
+        elif command["action"] == "GO_BACKWARD":
+            act = "BW"
+        elif command["action"] == "TURN_LEFT_FORWARD":
+            act = "FL"
+        elif command["action"] == "TURN_RIGHT_FORWARD":
+            act = "FR"
+        elif command["action"] == "TURN_LEFT_BACKWARD":
+            act = "BL"
+        elif command["action"] == "TURN_RIGHT_BACKWARD":
+            act = "BR"
+        elif command["action"] == "SNAP":
+            act = "SNAP"
 
         if act == "SNAP":
             commands.append("SNAP")

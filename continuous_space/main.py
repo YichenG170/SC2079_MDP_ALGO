@@ -40,7 +40,7 @@ def initialize():
     obstacle7 = Obstacle([125, 20], Direction.LEFT)
     field.add_obstacle(obstacle7)
     
-    obstacle8 = Obstacle([50, 150], Direction.RIGHT)
+    obstacle8 = Obstacle([40, 150], Direction.RIGHT)
     field.add_obstacle(obstacle8)
     
     return field

@@ -45,6 +45,9 @@ GOAL_THRESHOLD = 2
 #2
 #2
 
+# Minimum allowed distance between the robot and objects
+MIN_DISTANCE = 0.5 # Bugs here, leave it 1 or 0.5
+
 # Observation distance
 OBSERVATION_DISTANCE = 15 + ROBOT_H / 2
 

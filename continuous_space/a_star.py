@@ -2,8 +2,16 @@ import math
 import heapq
 from itertools import permutations
 from functools import cache  # Use functools.lru_cache for Python versions < 3.9
-from entities import Robot, Obstacle, Field
 from constants import *
+
+ACTIONS = [
+    'GO_FORWARD',
+    'GO_BACKWARD',
+    'TURN_LEFT_FORWARD',
+    'TURN_RIGHT_FORWARD',
+    'TURN_LEFT_BACKWARD',
+    'TURN_RIGHT_BACKWARD'
+]
 
 class State:
     def __init__(self, x, y, theta, g=0, h=0, parent=None, action=None):
@@ -26,7 +34,7 @@ class State:
         return (round(self.x, 1), round(self.y, 1), round(self.theta, 1)) == \
                (round(other.x, 1), round(other.y, 1), round(other.theta, 1))
 
-def a_star_search(field: Field, target_pos: list, target_theta: float):
+def a_star_search(field, target_pos, target_theta):
     robot = field.get_robot()
     start_x, start_y = robot.get_center_pos()
     start_theta = robot.get_theta()
@@ -105,10 +113,12 @@ def get_successors(state, field):
             successors.append(successor)
 
         elif action in ['TURN_LEFT_FORWARD', 'TURN_LEFT_BACKWARD',
-                       'TURN_RIGHT_FORWARD', 'TURN_RIGHT_BACKWARD']:
+                        'TURN_RIGHT_FORWARD', 'TURN_RIGHT_BACKWARD']:
             turn_params = parse_turn_action(action)
-            new_x, new_y, new_theta = perform_turn(state.x, state.y, state.theta, turn_params['direction'],
-                                                  turn_params['movement'])
+            new_x, new_y, new_theta = perform_turn(
+                state.x, state.y, state.theta,
+                turn_params['direction'], turn_params['movement']
+            )
             successor = State(new_x, new_y, new_theta, parent=state, action=action)
             successors.append(successor)
 
@@ -191,7 +201,8 @@ def check_straight_path(start_state, end_state, field):
         t = i / num_samples
         x = start_state.x + t * (end_state.x - start_state.x)
         y = start_state.y + t * (end_state.y - start_state.y)
-        temp_state = State(x, y, start_state.theta)
+        theta = start_state.theta  # Assuming straight movement, theta remains the same
+        temp_state = State(x, y, theta)
         if not check_collision(temp_state, field):
             return False
     return True
@@ -239,28 +250,31 @@ def check_turning_path(start_state, end_state, field):
         obs_min_y = obstacle.min_y
         obs_max_y = obstacle.max_y
 
-        if (obs_max_x >= min_x and obs_min_x <= max_x and
-            obs_max_y >= min_y and obs_min_y <= max_y):
+        if (obs_max_x >= min_x - MIN_DISTANCE and obs_min_x <= max_x + MIN_DISTANCE and
+            obs_max_y >= min_y - MIN_DISTANCE and obs_min_y <= max_y + MIN_DISTANCE):
             nearby_obstacles.append(obstacle)
 
     # Check collision with nearby obstacles
     for obstacle in nearby_obstacles:
-        if polygons_intersect_optimized(tuple(swept_area), obstacle):
+        if polygons_intersect_optimized(swept_area, obstacle):
             return False
 
     # Also check boundaries
     for point in swept_area:
-        if not (0 <= point[0] <= FIELD_W and 0 <= point[1] <= FIELD_H):
+        if not (MIN_DISTANCE <= point[0] <= FIELD_W - MIN_DISTANCE and
+                MIN_DISTANCE <= point[1] <= FIELD_H - MIN_DISTANCE):
             return False
 
     return True
 
 def check_collision(state, field):
     """
-    Checks if the robot at the given state collides with any obstacles or boundaries.
+    Checks if the robot at the given state collides with any obstacles or boundaries,
+    considering the minimum allowed distance.
     """
-    # Check boundaries
-    if not (0 <= state.x <= FIELD_W and 0 <= state.y <= FIELD_H):
+    # Check boundaries with MIN_DISTANCE buffer
+    if not (MIN_DISTANCE <= state.x <= FIELD_W - MIN_DISTANCE and
+            MIN_DISTANCE <= state.y <= FIELD_H - MIN_DISTANCE):
         return False
 
     robot = field.get_robot()
@@ -289,8 +303,8 @@ def check_collision(state, field):
         obs_min_y = obstacle.min_y
         obs_max_y = obstacle.max_y
 
-        if (obs_max_x >= min_x and obs_min_x <= max_x and
-            obs_max_y >= min_y and obs_min_y <= max_y):
+        if (obs_max_x >= min_x - MIN_DISTANCE and obs_min_x <= max_x + MIN_DISTANCE and
+            obs_max_y >= min_y - MIN_DISTANCE and obs_min_y <= max_y + MIN_DISTANCE):
             nearby_obstacles.append(obstacle)
 
     # Check collision with nearby obstacles
@@ -367,7 +381,8 @@ def axis_key_func(axis):
 
 def polygons_intersect_optimized(poly1, obstacle):
     """
-    Optimized polygon intersection using precomputed obstacle data.
+    Optimized polygon intersection using precomputed obstacle data,
+    considering a minimum allowed distance.
     """
     # poly1 is the robot's polygon or swept area (tuple of points)
     axes = get_axes(poly1)
@@ -386,9 +401,21 @@ def polygons_intersect_optimized(poly1, obstacle):
             proj2 = project_polygon(axis, obstacle_corners)
             obstacle.projections[key] = proj2  # Cache it
 
-        if proj1[1] < proj2[0] or proj2[1] < proj1[0]:
-            return False
-    return True
+        # Compute the gap between projections
+        if proj1[1] < proj2[0]:
+            gap = proj2[0] - proj1[1]
+        elif proj2[1] < proj1[0]:
+            gap = proj1[0] - proj2[1]
+        else:
+            gap = 0  # Projections overlap
+
+        # If the gap is greater than MIN_DISTANCE, no collision on this axis
+        if gap > MIN_DISTANCE:
+            return False  # No collision (or within minimum distance) on this axis
+
+    # If we didn't find a separating axis with a gap larger than MIN_DISTANCE,
+    # the robot is within MIN_DISTANCE of the obstacle
+    return True  # Collision detected within minimum allowed distance
 
 @cache
 def get_axes(polygon):
@@ -412,7 +439,12 @@ def project_polygon(axis, polygon):
     Projects a polygon onto an axis.
     """
     dots = [point[0] * axis[0] + point[1] * axis[1] for point in polygon]
-    return (min(dots), max(dots))
+    min_proj = min(dots)
+    max_proj = max(dots)
+    # Expand the projection by MIN_DISTANCE on both sides
+    min_proj -= MIN_DISTANCE
+    max_proj += MIN_DISTANCE
+    return (min_proj, max_proj)
 
 @cache
 def compute_convex_hull(points):

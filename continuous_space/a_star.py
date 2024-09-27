@@ -417,7 +417,7 @@ def polygons_intersect_optimized(poly1, obstacle):
     # the robot is within MIN_DISTANCE of the obstacle
     return True  # Collision detected within minimum allowed distance
 
-@cache
+#@cache
 def get_axes(polygon):
     """
     Computes the axes (normals to edges) for a polygon.
@@ -433,7 +433,7 @@ def get_axes(polygon):
         axes.append(normalized_axis)
     return tuple(axes)
 
-@cache
+#@cache
 def project_polygon(axis, polygon):
     """
     Projects a polygon onto an axis.
@@ -446,7 +446,7 @@ def project_polygon(axis, polygon):
     max_proj += MIN_DISTANCE
     return (min_proj, max_proj)
 
-@cache
+#@cache
 def compute_convex_hull(points):
     """
     Computes the convex hull of a set of 2D points using the monotone chain algorithm.
@@ -477,7 +477,7 @@ def compute_convex_hull(points):
 
     return tuple(convex_hull)
 
-@cache
+#@cache
 def cross(o, a, b):
     """
     2D cross product of OA and OB vectors, i.e., z-component of (OA x OB).

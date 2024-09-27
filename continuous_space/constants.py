@@ -1,5 +1,6 @@
 # constants.py
 from enum import Enum
+import multiprocess as mp
 
 class Direction(int, Enum):
     RIGHT = 0
@@ -51,7 +52,7 @@ OBSERVATION_DISTANCE = 15 + ROBOT_H / 2
 ROTATION_COST = 100
 
 # Core number
-CORE_NUM = 3
+CORE_NUM = mp.cpu_count()
 
 # Colors
 WHITE = (255, 255, 255)

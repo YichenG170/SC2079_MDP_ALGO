@@ -36,7 +36,7 @@ TURN_RADIUS = 18  # Fixed turning radius for quarter-circle turns
 SAMPLE_DISTANCE = 2  # Units between samples when checking collision along paths
 
 # Movement step size
-MOVE_STEP = 2  # Units for straight movements
+MOVE_STEP = 4  # Units for straight movements
 #2
 #5
 

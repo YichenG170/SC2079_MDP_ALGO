@@ -7,7 +7,7 @@ app = flask.Flask(__name__)
 def index():
     return "Hello, World!"
 
-@app.route("/obstacles", methods=["POST"])
+@app.route("/path", methods=["POST"])
 def obstacles():
     json_input = flask.request.json
     print(json_input)

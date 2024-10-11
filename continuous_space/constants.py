@@ -32,6 +32,8 @@ CELL_SIZE = 10
 
 TURN_RADIUS = 26  # Fixed turning radius for quarter-circle turns
 
+DEGREE_90 = 82 # a 90 degree irl is DEGREE_90 in the simulation
+
 # Sampling for collision detection
 SAMPLE_DISTANCE = 2  # Units between samples when checking collision along paths
 

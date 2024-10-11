@@ -1,7 +1,5 @@
 import math
 import heapq
-from itertools import permutations
-from functools import cache  # Use functools.lru_cache for Python versions < 3.9
 from constants import *
 
 ACTIONS = [

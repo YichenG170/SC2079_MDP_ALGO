@@ -300,7 +300,7 @@ if __name__ == "__main__":
 
     input = json.loads(json_input)
 
-    if 1:
+    if 0:
         
 
         print("=== input === \n", input)
@@ -310,5 +310,5 @@ if __name__ == "__main__":
         # Call the function and print the result
         print("=== output ===\n", output)
 
-    if 0:
+    if 1:
         cProfile.run('map_to_inst(input)')

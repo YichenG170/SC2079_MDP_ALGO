@@ -33,7 +33,7 @@ CELL_SIZE = 10
 TURN_RADIUS = 18  # Fixed turning radius for quarter-circle turns
 
 # Sampling for collision detection
-SAMPLE_DISTANCE = 2  # Units between samples when checking collision along paths
+SAMPLE_DISTANCE = 5  # Units between samples when checking collision along paths
 
 # Movement step size
 MOVE_STEP = 4  # Units for straight movements

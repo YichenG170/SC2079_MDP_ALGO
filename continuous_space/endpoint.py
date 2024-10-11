@@ -82,7 +82,7 @@ def map_to_inst(json_input):
 
     # Create Field and Robot instances
     field = Field(r=100, obs = [])
-    robot = Robot([10, 10], Direction.UP)
+    robot = Robot([11, 13], Direction.UP)
     field.set_robot(robot)
 
     for obstacle in obstacles:
@@ -253,20 +253,20 @@ obs_3_input ="""
         "obstacles":
         [
             {
-                "x": 100,
-                "y": 100,
+                "x": 105,
+                "y": 105,
                 "id": 1,
                 "d": 0
             },
             {
-                "x": 150,
-                "y": 50,
+                "x": 155,
+                "y": 55,
                 "id": 2,
                 "d": 4
             },
             {
-                "x": 60,
-                "y": 60,
+                "x": 65,
+                "y": 65,
                 "id": 3,
                 "d": 2
             }
@@ -300,7 +300,7 @@ if __name__ == "__main__":
 
     input = json.loads(json_input)
 
-    if 0:
+    if 1:
         
 
         print("=== input === \n", input)
@@ -310,5 +310,5 @@ if __name__ == "__main__":
         # Call the function and print the result
         print("=== output ===\n", output)
 
-    if 1:
+    if 0:
         cProfile.run('map_to_inst(input)')

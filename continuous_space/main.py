@@ -15,34 +15,62 @@ def initialize():
     field = Field(r=100, obs=[])
 
     # Initialize the robot at position (50, 50) facing UP (90 degrees)
-    robot = Robot([10, 12], Direction.UP)
+    robot = Robot([11, 13], Direction.UP)
     field.set_robot(robot)
 
     # Add obstacles to the field
-    obstacle1 = Obstacle([100, 100], Direction.DOWN)
+    # obstacle1 = Obstacle([100, 100], Direction.DOWN)
+    # field.add_obstacle(obstacle1)
+
+    # obstacle2 = Obstacle([150, 50], Direction.UP)
+    # field.add_obstacle(obstacle2)
+    
+    # obstacle3 = Obstacle([60, 60], Direction.RIGHT)
+    # field.add_obstacle(obstacle3)
+    
+    # obstacle4 = Obstacle([10, 100], Direction.RIGHT)
+    # field.add_obstacle(obstacle4)
+    
+    # obstacle5 = Obstacle([150, 150], Direction.LEFT)
+    # field.add_obstacle(obstacle5)
+    
+    # obstacle6 = Obstacle([175, 175], Direction.DOWN)
+    # field.add_obstacle(obstacle6)
+    
+    # obstacle7 = Obstacle([125, 20], Direction.LEFT)
+    # field.add_obstacle(obstacle7)
+    
+    # obstacle8 = Obstacle([40, 150], Direction.RIGHT)
+    # field.add_obstacle(obstacle8)
+    
+    # {
+    #     "x": 100,
+    #     "y": 100,
+    #     "id": 1,
+    #     "d": 0
+    # },
+    # {
+    #     "x": 150,
+    #     "y": 50,
+    #     "id": 2,
+    #     "d": 4
+    # },
+    # {
+    #     "x": 60,
+    #     "y": 60,
+    #     "id": 3,
+    #     "d": 2
+    # }
+
+    obstacle1 = Obstacle([100+5, 100+5], Direction.UP)
     field.add_obstacle(obstacle1)
 
-    obstacle2 = Obstacle([150, 50], Direction.UP)
+    obstacle2 = Obstacle([150+5, 50+5], Direction.DOWN)
     field.add_obstacle(obstacle2)
-    
-    obstacle3 = Obstacle([60, 60], Direction.RIGHT)
+
+    obstacle3 = Obstacle([60+5, 60+5], Direction.RIGHT)
     field.add_obstacle(obstacle3)
-    
-    obstacle4 = Obstacle([10, 100], Direction.RIGHT)
-    field.add_obstacle(obstacle4)
-    
-    obstacle5 = Obstacle([150, 150], Direction.LEFT)
-    field.add_obstacle(obstacle5)
-    
-    obstacle6 = Obstacle([175, 175], Direction.DOWN)
-    field.add_obstacle(obstacle6)
-    
-    obstacle7 = Obstacle([125, 20], Direction.LEFT)
-    field.add_obstacle(obstacle7)
-    
-    obstacle8 = Obstacle([40, 150], Direction.RIGHT)
-    field.add_obstacle(obstacle8)
-    
+
     return field
 
 def main(field):
@@ -51,6 +79,8 @@ def main(field):
 
     # Find the optimal path covering all targets
     path = optimal_path(field, targets)
+
+    print("Optimal path:", path)
 
     # add this cus I cant render the path with SNAP
     if path is not None:

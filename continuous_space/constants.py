@@ -19,8 +19,8 @@ ACTIONS = [
 ]
 
 # Dimensions (units)
-ROBOT_W = 24
-ROBOT_H = 19
+ROBOT_W = 26
+ROBOT_H = 20
 
 OBSTACLE_W = 10
 OBSTACLE_H = 10
@@ -30,13 +30,13 @@ FIELD_H = 200
 
 CELL_SIZE = 10
 
-TURN_RADIUS = 18  # Fixed turning radius for quarter-circle turns
+TURN_RADIUS = 24  # Fixed turning radius for quarter-circle turns
 
 # Sampling for collision detection
-SAMPLE_DISTANCE = 5  # Units between samples when checking collision along paths
+SAMPLE_DISTANCE = 2  # Units between samples when checking collision along paths
 
 # Movement step size
-MOVE_STEP = 4  # Units for straight movements
+MOVE_STEP = 2  # Units for straight movements
 #2
 #5
 

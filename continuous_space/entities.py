@@ -61,7 +61,7 @@ class Robot:
 
 class Obstacle:
     def __init__(self, pos: list, theta: float) -> None:
-        self.center_pos = pos  # [x, y]
+        self.center_pos = [pos[0], pos[1]]  # [x, y]
         self.theta = theta      # Orientation in degrees
         self.width = float(OBSTACLE_W)
         self.height = float(OBSTACLE_H)

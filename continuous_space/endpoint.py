@@ -181,7 +181,7 @@ def map_to_inst(json_input):
         "error": None
     }
 
-    return json.dumps(output)
+    return output
 
 
 # # Add obstacles to the field

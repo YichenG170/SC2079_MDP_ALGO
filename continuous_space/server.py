@@ -35,7 +35,7 @@ def path():
 
     path = endpoint.map_to_inst(json_input)
 
-    return path
+    return jsonify(path), 200
     # >>>> End of function
 
 

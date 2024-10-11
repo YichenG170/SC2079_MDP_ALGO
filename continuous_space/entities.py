@@ -4,7 +4,7 @@ from constants import ROBOT_W, ROBOT_H, OBSTACLE_W, OBSTACLE_H
 
 class Robot:
     def __init__(self, pos: list, theta: float) -> None:
-        self.center_pos = [pos[0]+5, pos[1]+5]  # [x, y]
+        self.center_pos = [pos[0], pos[1]]  # [x, y]
         self.theta = theta      # Orientation in degrees
         self.width = float(ROBOT_W)
         self.height = float(ROBOT_H)

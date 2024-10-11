@@ -30,7 +30,7 @@ FIELD_H = 200
 
 CELL_SIZE = 10
 
-TURN_RADIUS = 24  # Fixed turning radius for quarter-circle turns
+TURN_RADIUS = 26  # Fixed turning radius for quarter-circle turns
 
 # Sampling for collision detection
 SAMPLE_DISTANCE = 2  # Units between samples when checking collision along paths

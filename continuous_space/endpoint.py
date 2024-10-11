@@ -133,7 +133,10 @@ def map_to_inst(json_input):
         })
 
         if temp_commands and temp_commands[-1]["action"] == action:
-            temp_commands[-1]["distance"] += MOVE_STEP
+            if action in ["GO_FORWARD", "GO_BACKWARD"]:
+                temp_commands[-1]["distance"] += MOVE_STEP
+            else:
+                temp_commands[-1]["distance"] += 90
         else:
             distmove = MOVE_STEP if action in ["GO_FORWARD", "GO_BACKWARD"] else 90
             temp_commands.append({
@@ -276,7 +279,7 @@ obs_3_input ="""
 
 if __name__ == "__main__":
     # Sample input
-    json_input = obs_8_input
+    json_input = obs_3_input
 
     # json_input = """
     # {

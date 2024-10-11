@@ -135,10 +135,10 @@ def map_to_inst(json_input):
         if temp_commands and temp_commands[-1]["action"] == action:
             temp_commands[-1]["distance"] += MOVE_STEP
         else:
-            distmove = MOVE_STEP if action in ["GO_FORWARD""GO_BACKWARD"] else 0
+            distmove = MOVE_STEP if action in ["GO_FORWARD", "GO_BACKWARD"] else 90
             temp_commands.append({
-                "action": action,
-                "distance": MOVE_STEP
+            "action": action,
+            "distance": distmove
             })
 
     commands = []
@@ -162,7 +162,7 @@ def map_to_inst(json_input):
         if act == "SNAP":
             commands.append("SNAP")
         else:
-            commands.append(f"{act}{str(command['distance']).zfill(2)}")
+            commands.append(f"{act}{str(command['distance']).zfill(3)}")
 
 
 
@@ -191,9 +191,7 @@ def map_to_inst(json_input):
 
 # obstacle4 = Obstacle([10, 100], Direction.RIGHT)
 
-if __name__ == "__main__":
-    # Sample input
-    json_input = """
+obs_8_input = """
     {
         "obstacles":
         [
@@ -250,6 +248,36 @@ if __name__ == "__main__":
     }
     """
 
+obs_3_input ="""
+    {
+        "obstacles":
+        [
+            {
+                "x": 100,
+                "y": 100,
+                "id": 1,
+                "d": 0
+            },
+            {
+                "x": 150,
+                "y": 50,
+                "id": 2,
+                "d": 4
+            },
+            {
+                "x": 60,
+                "y": 60,
+                "id": 3,
+                "d": 2
+            }
+        ]
+    }
+    """
+
+if __name__ == "__main__":
+    # Sample input
+    json_input = obs_8_input
+
     # json_input = """
     # {
     #     "obstacles":
@@ -272,7 +300,7 @@ if __name__ == "__main__":
 
     input = json.loads(json_input)
 
-    if 0:
+    if 1:
         
 
         print("=== input === \n", input)
@@ -282,5 +310,5 @@ if __name__ == "__main__":
         # Call the function and print the result
         print("=== output ===\n", output)
 
-    if 1:
+    if 0:
         cProfile.run('map_to_inst(input)')

@@ -276,7 +276,7 @@ obs_3_input ="""
 
 if __name__ == "__main__":
     # Sample input
-    json_input = obs_8_input
+    json_input = obs_3_input
 
     # json_input = """
     # {

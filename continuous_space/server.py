@@ -101,7 +101,7 @@ def upload_image(num):
         return jsonify({"error": "No selected file"}), 400
 
     # Save the image
-    image_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), img_file.filename)
+    image_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "images", img_file.filename)
     img_file.save(image_path)
 
     return do_inference(image_path, num)

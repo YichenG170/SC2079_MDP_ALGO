@@ -198,124 +198,43 @@ def map_to_inst(json_input: json):
 
 # obstacle4 = Obstacle([10, 100], Direction.RIGHT)
 
-obs_8_input = """
-    {
-        "obstacles":
-        [
-            {
-                "x": 100,
-                "y": 100,
-                "id": 1,
-                "d": 4
-            },
-            {
-                "x": 150,
-                "y": 50,
-                "id": 2,
-                "d": 0
-            },
-            {
-                "x": 60,
-                "y": 60,
-                "id": 3,
-                "d": 2
-            },
-            {
-                "x": 10,
-                "y": 100,
-                "id": 4,
-                "d": 2
-            },
-            {
-                "x": 150,
-                "y": 150,
-                "id": 5,
-                "d": 6
-            },
-            {
-                "x": 175,
-                "y": 175,
-                "id": 6,
-                "d": 4
-            }
-            ,
-            {
-                "x": 125,
-                "y": 20,
-                "id": 7,
-                "d": 6
-            },
-            {
-                "x": 40,
-                "y": 150,
-                "id": 8,
-                "d": 2
-            }
-        ]
-    }
-    """
 
-obs_3_input ="""
-    {
-        "obstacles":
-        [
-            {
-                "x": 105,
-                "y": 105,
-                "id": 1,
-                "d": 0
-            },
-            {
-                "x": 155,
-                "y": 55,
-                "id": 2,
-                "d": 4
-            },
-            {
-                "x": 65,
-                "y": 65,
-                "id": 3,
-                "d": 2
-            }
-        ]
-    }
-    """
 
-if __name__ == "__main__":
-    # Sample input
-    json_input = obs_3_input
+# if __name__ == "__main__":
+#     # Sample input
+#     json_input = obs_3_input
 
-    # json_input = """
-    # {
-    #     "obstacles":
-    #     [
-    #         {
-    #             "x": 100,
-    #             "y": 100,
-    #             "id": 1,
-    #             "d": 0
-    #         },
-    #         {
-    #             "x": 150,
-    #             "y": 50,
-    #             "id": 2,
-    #             "d": 4
-    #         }
-    #     ]
-    # }
-    # """
+#     # json_input = """
+#     # {
+#     #     "obstacles":
+#     #     [
+#     #         {
+#     #             "x": 100,
+#     #             "y": 100,
+#     #             "id": 1,
+#     #             "d": 0
+#     #         },
+#     #         {
+#     #             "x": 150,
+#     #             "y": 50,
+#     #             "id": 2,
+#     #             "d": 4
+#     #         }
+#     #     ]
+#     # }
+#     # """
 
-    input = json.loads(json_input)
+#     input = json.loads(json_input)
 
-    if 1:
+#     if 1:
         
 
-        print("=== input === \n", input)
+#         print("=== input === \n", input)
 
-        output = map_to_inst(input)
-        output = json.loads(output)
-        # Call the function and print the result
-        print("=== output ===\n", output)
+#         output = map_to_inst(input)
+#         output = json.loads(output)
+#         # Call the function and print the result
+#         print("=== output ===\n", output)
 
-    if 0:
-        cProfile.run('map_to_inst(input)')
+#     if 0:
+#         cProfile.run('map_to_inst(input)')

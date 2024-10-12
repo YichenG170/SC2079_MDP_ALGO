@@ -7,8 +7,9 @@ from a_star import a_star_search
 from entities import Field, Robot, Obstacle
 from constants import FIELD_W, FIELD_H, OBSERVATION_DISTANCE, TURN_RADIUS, SAMPLE_DISTANCE, ACTIONS, MOVE_STEP, Direction
 import json
+from flask import jsonify
 
-def map_to_inst(json_input):
+def map_to_inst(json_input: json):
     
     """
     Sample Input:
@@ -118,6 +119,9 @@ def map_to_inst(json_input):
     path = optimal_path(field, targets)
     print("=== path ===\n", path)
 
+    if path == None:
+        return jsonify({"error": "path not found"}), 404
+
     temp_commands = [] # [{"action": action, "distance": distance}]
     path_results = []
 
@@ -169,8 +173,6 @@ def map_to_inst(json_input):
         else:
             commands.append(f"{act}{str(command['distance']).zfill(3)}")
 
-
-
     # Create the output dictionary
     output = {
         "data": {
@@ -181,7 +183,7 @@ def map_to_inst(json_input):
         "error": None
     }
 
-    return output
+    return jsonify(output), 200
 
 
 # # Add obstacles to the field

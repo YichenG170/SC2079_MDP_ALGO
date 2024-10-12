@@ -31,11 +31,9 @@ def status():
 @app.route('/path', methods=['POST'])
 def path():
     json_input = request.json
-    print(json_input)
+    print("Input received: ", json_input)
 
-    path = endpoint.map_to_inst(json_input)
-
-    return jsonify(path), 200
+    return endpoint.map_to_inst(json_input)
     # >>>> End of function
 
 

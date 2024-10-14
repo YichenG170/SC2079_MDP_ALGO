@@ -3,5 +3,7 @@ continuous_space/__pycache__/
 discrete_space/__pycache__/
 continuous_space/images/*
 continuous_space/marked/*
+continuous_space/stitched/*
 !continuous_space/images/.gitkeep
 !continuous_space/marked/.gitkeep
+!continuous_space/stitched/.gitkeep

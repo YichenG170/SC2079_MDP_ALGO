@@ -8,6 +8,7 @@ from entities import Field, Robot, Obstacle
 from constants import FIELD_W, FIELD_H, OBSERVATION_DISTANCE, TURN_RADIUS, SAMPLE_DISTANCE, ACTIONS, MOVE_STEP, Direction
 import json
 from flask import jsonify
+from main import visualize_path
 
 def map_to_inst(json_input: json):
     
@@ -120,6 +121,18 @@ def map_to_inst(json_input: json):
     # Get the optimal path
     path = optimal_path(field, targets)
     print("=== path ===\n", path)
+    if path is not None:
+        path = list(filter(lambda x: x[3] != 'SNAP', path))
+
+    if path:
+        print("Optimal path found.\n")
+        # Compute and print movement commands
+        # Visualize the path using Pygame, passing the list of targets
+        # --------------------uncomment here to visualize the path--------------------
+        visualize_path(field, path, targets)
+        # ----------------------------------------------------------------------------
+    else:
+        print("No path found.")
 
     if path == None:
         return jsonify({"error": "path not found"}), 404

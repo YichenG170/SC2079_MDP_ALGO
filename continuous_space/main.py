@@ -149,32 +149,36 @@ def compute_and_print_commands(path):
     print("\n")
 
 def visualize_path(field, path, targets):
-    # Initialize Pygame
     pygame.init()
-    scale_factor = 3  # Enlarge the field by this factor
+    scale_factor = 3
     window_size = (int(FIELD_W * scale_factor), int(FIELD_H * scale_factor))
     screen = pygame.display.set_mode(window_size)
     pygame.display.set_caption("Robot Path Visualization")
-    # Reduced frame rate to slow down the animation
     clock = pygame.time.Clock()
 
-    # Load obstacles
     obstacles = field.get_obstacles()
 
-    # Main loop variables
     running = True
     index = 0
     path_length = len(path)
-    path_positions = []    # Store positions to draw the path
-    robot_positions = []   # Positions for robot animation
+    path_positions = []
+    robot_positions = []
 
-    # Target tracking
     remaining_targets = targets.copy()
     reached_targets = []
 
-    # Direction arrow tracking
     accumulated_distance = 0.0
-    ARROW_DISTANCE = 30.0  # Increased from 15.0 to 30.0 units
+    ARROW_DISTANCE = 30.0
+
+    def draw_grid(screen, scale_factor):
+        grid_size = 10
+        grid_color = LIGHT_GREY
+        for x in range(0, FIELD_W, grid_size):
+            scaled_x = x * scale_factor
+            pygame.draw.line(screen, grid_color, (scaled_x, 0), (scaled_x, window_size[1]))
+        for y in range(0, FIELD_H, grid_size):
+            scaled_y = (FIELD_H - y) * scale_factor
+            pygame.draw.line(screen, grid_color, (0, scaled_y), (window_size[0], scaled_y))
 
     while running:
         for event in pygame.event.get():
@@ -182,7 +186,6 @@ def visualize_path(field, path, targets):
                 running = False
 
         if index < path_length - 1:
-            # Interpolate between the current and next state
             current_state = path[index]
             next_state = path[index + 1]
 
@@ -191,24 +194,21 @@ def visualize_path(field, path, targets):
             robot_positions.extend(interpolated_positions)
             index += 1
 
-        # Clear screen
         screen.fill(WHITE)
 
-        # Draw obstacles
+        draw_grid(screen, scale_factor)
+
         for obstacle in obstacles:
             draw_entity(screen, obstacle, BLACK, scale_factor)
 
-        # Draw targets as green points initially
         for target in targets:
             target_pos, _ = target
             draw_target(screen, target_pos, GREEN, scale_factor)
 
-        # Draw path
         if len(path_positions) >= 2:
             scaled_path = [((x * scale_factor), (FIELD_H - y) * scale_factor) for x, y, _ in path_positions]
             pygame.draw.lines(screen, LIGHT_GREY, False, scaled_path, 2)
 
-        # Draw direction arrows every ARROW_DISTANCE units
         if len(path_positions) >= 2:
             for i in range(1, len(path_positions)):
                 prev = path_positions[i - 1]
@@ -217,18 +217,16 @@ def visualize_path(field, path, targets):
                 accumulated_distance += segment_distance
 
                 if accumulated_distance >= ARROW_DISTANCE:
-                    # Draw arrow at current position indicating direction
                     x, y, theta = curr
                     draw_direction_arrow(screen, x, y, theta, scale_factor)
-                    accumulated_distance = 0.0  # Reset accumulator
+                    accumulated_distance = 0.0
 
-        # Draw robot
         if robot_positions:
             current_robot_pos = robot_positions.pop(0)
             if current_robot_pos == "SNAP":
                 draw_entity(screen, robot, RED, scale_factor)
                 pygame.display.flip()
-                pygame.time.wait(100)  # Wait for 100 milliseconds
+                pygame.time.wait(100)
                 continue
 
             robot_x, robot_y, robot_theta = current_robot_pos[:3]
@@ -237,26 +235,21 @@ def visualize_path(field, path, targets):
             robot.set_theta(robot_theta)
             draw_entity(screen, robot, BLUE, scale_factor)
 
-            # Check if a target is reached
             for target in remaining_targets.copy():
                 target_pos, target_theta = target
                 distance = math.hypot(robot_x - target_pos[0], robot_y - target_pos[1])
                 angle_diff = abs((robot_theta - target_theta + 180) % 360 - 180)
                 if distance <= GOAL_THRESHOLD and angle_diff <= 5.0:
-                    # Target reached
                     reached_targets.append(target)
                     remaining_targets.remove(target)
                     print(f"Reached target at {target_pos} with orientation {target_theta} degrees.")
 
-        # Draw reached targets as red points
         for target in reached_targets:
             target_pos, _ = target
             draw_target(screen, target_pos, RED, scale_factor)
 
-        # Update display
         pygame.display.flip()
-        # Set frame rate to 15 FPS to slow down the animation
-        clock.tick(15)  # Reduced from 60 to 15
+        clock.tick(15)
 
     pygame.quit()
 

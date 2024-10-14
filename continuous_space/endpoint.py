@@ -18,14 +18,14 @@ def map_to_inst(json_input: json):
         [
             {
                 "x": 0,
-                "y": 9,
+                "y": 90, # Make sure to times 10
                 "id": 1,
                 "d": 2
             },
             ...,
             {
-                "x": 19,
-                "y": 14,
+                "x": 190,
+                "y": 140,
                 "id": 5,
                 "d": 6
             }
@@ -114,6 +114,8 @@ def map_to_inst(json_input: json):
             targets.append(((x - OBSERVATION_DISTANCE - 1, y), Direction.RIGHT))
         elif direction == Direction.RIGHT:
             targets.append(((x + OBSERVATION_DISTANCE + 1, y), Direction.LEFT))
+
+    print(targets)
 
     # Get the optimal path
     path = optimal_path(field, targets)

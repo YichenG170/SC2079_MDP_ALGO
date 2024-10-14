@@ -9,6 +9,7 @@ from constants import FIELD_W, FIELD_H, OBSERVATION_DISTANCE, TURN_RADIUS, SAMPL
 import json
 from flask import jsonify
 from main import visualize_path
+import threading
 
 def map_to_inst(json_input: json):
     
@@ -129,7 +130,8 @@ def map_to_inst(json_input: json):
         # Compute and print movement commands
         # Visualize the path using Pygame, passing the list of targets
         # --------------------uncomment here to visualize the path--------------------
-        visualize_path(field, path, targets)
+        thread = threading.Thread(target=visualize_path, args=(field, path, targets))
+        thread.start()
         # ----------------------------------------------------------------------------
     else:
         print("No path found.")

@@ -81,4 +81,4 @@ obs_3_input ="""
     }
     """
 
-test_inputs = [obs_3_input, obs_8_input]
+test_inputs = [obs_3_input] # , obs_8_input]

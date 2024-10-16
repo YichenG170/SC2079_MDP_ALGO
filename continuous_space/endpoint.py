@@ -153,11 +153,8 @@ def map_to_inst(json_input: json):
             "s": action
         })
 
-        if temp_commands and temp_commands[-1]["action"] == action:
-            if action in ["GO_FORWARD", "GO_BACKWARD"]:
+        if temp_commands and temp_commands[-1]["action"] == action and action in ["GO_FORWARD", "GO_BACKWARD"]:
                 temp_commands[-1]["distance"] += MOVE_STEP
-            else:
-                temp_commands[-1]["distance"] += DEGREE_90
         else:
             distmove = MOVE_STEP if action in ["GO_FORWARD", "GO_BACKWARD"] else DEGREE_90
             temp_commands.append({

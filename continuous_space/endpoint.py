@@ -174,10 +174,10 @@ def map_to_inst(json_input: json):
             act = "BW"
         elif command["action"] == "TURN_LEFT_FORWARD":
             act = "FL"
-            act = "A0"
+            # act = "A0"
         elif command["action"] == "TURN_RIGHT_FORWARD":
             act = "FR"
-            act = "C0"
+            # act = "C0"
         elif command["action"] == "TURN_LEFT_BACKWARD":
             act = "BL"
         elif command["action"] == "TURN_RIGHT_BACKWARD":

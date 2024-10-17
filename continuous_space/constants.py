@@ -30,7 +30,7 @@ FIELD_H = 200
 
 CELL_SIZE = 10
 
-TURN_RADIUS = 30  # Fixed turning radius for quarter-circle turns
+TURN_RADIUS = 32  # Fixed turning radius for quarter-circle turns
 
 DEGREE_90 = 00 # a 90 degree irl is DEGREE_90 in the simulation
 

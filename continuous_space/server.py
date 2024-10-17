@@ -62,6 +62,7 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
     highest_conf = 0
     highest_boxsize = 0
     highest_idx = 0
+    detected = False
 
     if arrows_only:
         print("Finding arrows (+bullseye) only")
@@ -75,6 +76,9 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
                 if cls not in [13, 16]:
                     continue
 
+                if boxsize < 10000:
+                    continue
+
                 label = f'{model.names[int(cls)]} {conf:.2f}'
                 print(f"{i}: conf={conf}, boxsize={boxsize}, label={label}")
 
@@ -85,11 +89,13 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
                         highest_conf = conf
                         highest_idx = cls
                         highest_boxsize = (boxsize, highest_boxsize) / 2
+                        detected = True
                 # bigger: take
                 elif boxsize > highest_boxsize:
                     highest_conf = conf
                     highest_idx = cls
                     highest_boxsize = boxsize
+                    detected = True
             except:
                 pass
     else:
@@ -103,6 +109,9 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
                 label = f'{model.names[int(cls)]} {conf:.2f}'
                 print(f"{i}: conf={conf}, boxsize={boxsize}, label={label}")
 
+                if boxsize < 10000:
+                    continue
+
                 # about same size
                 if abs(boxsize - highest_boxsize) <= BOXSIZE_EP:
                     # but check confidence
@@ -110,23 +119,33 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
                         highest_conf = conf
                         highest_idx = cls
                         highest_boxsize = max(boxsize, highest_boxsize)
+                        detected = True
                 # bigger: take
                 elif boxsize > highest_boxsize:
                     highest_conf = conf
                     highest_idx = cls
                     highest_boxsize = boxsize
+                    detected = True
             except:
                 pass
-        
-    ret = jsonify({
-            "id": int(yolo_to_check[int(highest_idx)]),
-            "name": model.names[int(highest_idx)],
-            "obstacle_id": obstacle_num,
-            "detected": len(results.xyxy[0])
+
+    if detected:
+        return jsonify({
+                "id": int(yolo_to_check[int(highest_idx)]),
+                "name": model.names[int(highest_idx)],
+                "obstacle_id": obstacle_num,
+                "detected": len(results.xyxy[0])
+            }
+            ), 200
+            
+    # cannot detect for needed purpose
+    return jsonify({
+            "id": 0,
+            "name": 0,
+            "obstacle_num": obstacle_num,
+            "detected": 0
         }
         ), 200
-    
-    return ret
 
     # >>>>> Function End
 

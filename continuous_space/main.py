@@ -63,24 +63,31 @@ def initialize():
     # }
     
     obstacle1 = Obstacle([80+5, 10+5], Direction.LEFT)
+    obstacle1.set_id(1)
     field.add_obstacle(obstacle1)
     
     obstacle1 = Obstacle([130+5, 10+5], Direction.RIGHT)
+    obstacle1.set_id(2)
     field.add_obstacle(obstacle1)
     
     obstacle1 = Obstacle([90+5, 70+5], Direction.RIGHT)
+    obstacle1.set_id(3)
     field.add_obstacle(obstacle1)
     
     obstacle1 = Obstacle([190+5, 90+5], Direction.LEFT)
+    obstacle1.set_id(4)
     field.add_obstacle(obstacle1)
     
     obstacle1 = Obstacle([190+5, 120+5], Direction.LEFT)
+    obstacle1.set_id(5)
     field.add_obstacle(obstacle1)
     
     obstacle1 = Obstacle([60+5, 120+5], Direction.RIGHT)
+    obstacle1.set_id(6)
     field.add_obstacle(obstacle1)
     
     obstacle1 = Obstacle([10+5, 180+5], Direction.DOWN)
+    obstacle1.set_id(7)
     field.add_obstacle(obstacle1)
 
     # obstacle1 = Obstacle([100+5, 100+5], Direction.UP)

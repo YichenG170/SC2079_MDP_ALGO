@@ -98,7 +98,9 @@ def map_to_inst(json_input: json):
             dir = Direction.DOWN
         elif obstacle["d"] == 6:
             dir = Direction.LEFT
-        field.add_obstacle(Obstacle([obstacle["x"], obstacle["y"]], dir))
+        obs = Obstacle([obstacle["x"], obstacle["y"]], dir)
+        obs.set_id(obstacle["id"])
+        field.add_obstacle(obs)
 
     targets = []
 
@@ -109,13 +111,13 @@ def map_to_inst(json_input: json):
         direction = obstacle.get_theta()
         
         if direction == Direction.UP:
-            targets.append(((x, y + OBSERVATION_DISTANCE + 1), Direction.DOWN))
+            targets.append(((x, y + OBSERVATION_DISTANCE + 1), Direction.DOWN, obstacle.get_id()))
         elif direction == Direction.DOWN:
-            targets.append(((x, y - OBSERVATION_DISTANCE - 1), Direction.UP))
+            targets.append(((x, y - OBSERVATION_DISTANCE - 1), Direction.UP, obstacle.get_id()))
         elif direction == Direction.LEFT:
-            targets.append(((x - OBSERVATION_DISTANCE - 1, y), Direction.RIGHT))
+            targets.append(((x - OBSERVATION_DISTANCE - 1, y), Direction.RIGHT, obstacle.get_id()))
         elif direction == Direction.RIGHT:
-            targets.append(((x + OBSERVATION_DISTANCE + 1, y), Direction.LEFT))
+            targets.append(((x + OBSERVATION_DISTANCE + 1, y), Direction.LEFT, obstacle.get_id()))
 
     print(targets)
 
@@ -158,7 +160,8 @@ def map_to_inst(json_input: json):
         elif temp_commands and action in ["SNAP"]: 
             temp_commands.append({
                 "action": "SNAP",
-                "distance": 0
+                "x": x,
+                "y": y
             })
         else: 
             distmove = MOVE_STEP if action in ["GO_FORWARD", "GO_BACKWARD"] else DEGREE_90
@@ -189,7 +192,12 @@ def map_to_inst(json_input: json):
             act = "SNAP"
 
         if act == "SNAP":
-            commands.append("SNAP")
+            for target in targets:
+                if abs(int(command['x']) - target[0][0]) + abs(int(command['y'] - target[0][1])) < 5:
+                    target_id = str(target[2])
+                    
+            text = "SNAP" + target_id
+            commands.append(text)
         else:
             commands.append(f"{act}{str(command['distance']).zfill(3)}")
 

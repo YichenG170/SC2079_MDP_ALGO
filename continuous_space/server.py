@@ -39,7 +39,7 @@ def path():
     # >>>> End of function
 
 
-def do_inference(image_path, obstacle_num):
+def do_inference(image_path, obstacle_num, arrows_only = False):
 
     # Perform inference
     results = model(image_path)
@@ -50,29 +50,53 @@ def do_inference(image_path, obstacle_num):
             "id": 0,
             "name": 0,
             "obstacle_num": obstacle_num,
+            "detected": 0
         }
         ), 200
+    
     
     # find highest confidence
     highest_conf = 0
     highest_idx = 0
-    for i, res in enumerate(results.xyxy[0]):
-        try:
-            # x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
-            conf = res[4].numpy()               # confidence
-            cls = int(res[5])                   # Class label (integer index)
-            label = f'{model.names[int(cls)]} {conf:.2f}'
-            print(f"{i}: conf={conf}, cls={cls}, label={label}")
-            if conf > highest_conf:
-                highest_conf = conf
-                highest_idx = cls
-        except:
-            pass
+
+    if arrows_only:
+        print("Finding arrows (+bullseye) only")
+        for i, res in enumerate(results.xyxy[0]):
+            try:
+                # x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
+                conf = res[4].numpy()               # confidence
+                cls = int(res[5])                   # Class label (integer index) : before convert
+                
+                if cls not in [13, 16, 2]:
+                    continue
+
+                label = f'{model.names[int(cls)]} {conf:.2f}'
+                print(f"{i}: conf={conf}, label={label}")
+                if conf > highest_conf:
+                    highest_conf = conf
+                    highest_idx = cls
+            except:
+                pass
+    else:
+        print("Finding all symbols")
+        for i, res in enumerate(results.xyxy[0]):
+            try:
+                # x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
+                conf = res[4].numpy()               # confidence
+                cls = int(res[5])                   # Class label (integer index)
+                label = f'{model.names[int(cls)]} {conf:.2f}'
+                print(f"{i}: conf={conf}, label={label}")
+                if conf > highest_conf:
+                    highest_conf = conf
+                    highest_idx = cls
+            except:
+                pass
         
     ret = jsonify({
-            "id": yolo_to_check[int(highest_idx)],
+            "id": int(yolo_to_check[int(highest_idx)]),
             "name": model.names[int(highest_idx)],
             "obstacle_id": obstacle_num,
+            "detected": len(results.xyxy[0])
         }
         ), 200
     
@@ -105,59 +129,101 @@ def upload_image(num):
         return jsonify({"error": "No selected file"}), 400
 
     # Save the image
-    image_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "images", img_file.filename)
+    image_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "images_task1", img_file.filename)
     img_file.save(image_path)
 
     return do_inference(image_path, num)
+
+@app.route('/notify-upload-arrow/<num>', methods=['POST'])
+def upload_image_arrow(num):
+    '''
+    ## >> How to use
+
+    image_path = 'path_to_image.jpg'
+    with open(image_path, 'rb') as img_file:
+        # Prepare the file as part of the form data
+        files = {'file': img_file}
+    
+    # Send the POST request
+    response = requests.post(url, files=files)
+    '''
+
+    if 'file' not in request.files:
+        return jsonify({"error": "No image part in the request"}), 400
+
+    img_file = request.files['file']
+
+    if img_file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    # Save the image
+    image_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "images_task2", img_file.filename)
+    img_file.save(image_path)
+
+    return do_inference(image_path, num, True)
 
 
 # rerun inference + mark images in the PC folder
 @app.route('/mark_rerun', methods=['GET'])
 def mark_rerun():
-    folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "images")
 
-    # Loop through all files in the folder
-    for filename in os.listdir(folder_path):
-        if filename.endswith('.jpg'):
+    postfixes = ["_task1", "_task2"]
 
-            image_path = os.path.join(folder_path, filename)
-            save_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "marked", filename)
+    for postfix in postfixes:
+        folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "images"+postfix)
 
-            # Perform inference
-            results = model(image_path)
+        # Loop through all files in the folder
+        for filename in os.listdir(folder_path):
+            if filename.endswith('.jpg'):
 
-            # if nothing detected
-            if len(results.xyxy[0]) == 0:
-                continue
+                image_path = os.path.join(folder_path, filename)
+                save_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "marked"+postfix, filename)
 
-            # find highest confidence
-            highest_conf = 0
-            highest_res = 0
+                # Perform inference
+                results = model(image_path)
 
-            # get the highest confidence read
-            for res in results.xyxy[0]:
+                # if nothing detected
+                if len(results.xyxy[0]) == 0:
+                    continue
+
+                # find highest confidence
+                highest_conf = 0
+                highest_res = 0
+
+                # get the highest confidence read
+                for res in results.xyxy[0]:
+                    try:
+                        # task2 only arrow + bullseye
+                        if postfix == "_task2":
+                            cls = int(res[5])               # Class label (integer index) : before convert
+                            if cls not in [13, 16, 2]:
+                                continue
+
+                        conf = res[4].numpy()   # confidence
+                        if conf > highest_conf:
+                            highest_conf = conf
+                            highest_res = res
+                    except:
+                        pass
+
+                # nothing detected, just skip
+                if highest_res == 0:
+                    continue
+
+                # open image
+                img = cv2.imread(image_path)
+
+                # get obstacle id
+                obstacle_id = filename.split("_")[1]
+
+                # mark image
                 try:
-                    conf = res[4].numpy()   # confidence
-                    if conf > highest_conf:
-                        highest_conf = conf
-                        highest_res = res
+                    mark_img(img, highest_res, obstacle_id)
                 except:
                     pass
-
-            # open image
-            img = cv2.imread(image_path)
-
-            # get obstacle id
-            obstacle_id = filename.split("_")[1]
-
-            # mark image
-            try:
-                mark_img(img, highest_res, obstacle_id)
-            except:
-                pass
-            
-            # save image
-            cv2.imwrite(save_path, img)
+                
+                # save image
+                cv2.imwrite(save_path, img)
 
     return jsonify({"Done": "Images marked"}), 200
     # >>>> End of Function
@@ -171,45 +237,50 @@ def stitch():
 
     if mark_response.status_code != 200:
         return mark_response
+    
+    postfixes = ["_task1", "_task2"]
 
-    folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "marked")
-    save_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "stitched", "stitched.jpg")
+    for postfix in postfixes:
+        folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "marked"+postfix)
+        save_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "stitched", "stitched"+postfix+".jpg")
 
-    # Get all .jpg images in the folder
-    images = [Image.open(os.path.join(folder_path, file)) for file in os.listdir(folder_path) if file.endswith('.jpg')]
+        # Get all .jpg images in the folder
+        images = [Image.open(os.path.join(folder_path, file)) for file in os.listdir(folder_path) if file.endswith('.jpg')]
 
-    if not images:
-        print("No .jpg images found in the folder.")
-        return
+        if not images:
+            print("No .jpg images found in the folder.")
+            return
 
-    # Get total width and height for the final stitched image
-    widths, heights = zip(*(img.size for img in images))
+        # Get total width and height for the final stitched image
+        widths, heights = zip(*(img.size for img in images))
 
-    if direction == 'H':
-        # Stitch horizontally: sum of widths, max height
-        total_width = sum(widths)
-        max_height = max(heights)
-        stitched_image = Image.new('RGB', (total_width, max_height))
-        
-        # Paste images one by one into the new stitched image
-        x_offset = 0
-        for img in images:
-            stitched_image.paste(img, (x_offset, 0))
-            x_offset += img.width
-    else:
-        # Stitch vertically: sum of heights, max width
-        total_height = sum(heights)
-        max_width = max(widths)
-        stitched_image = Image.new('RGB', (max_width, total_height))
-        
-        # Paste images one by one into the new stitched image
-        y_offset = 0
-        for img in images:
-            stitched_image.paste(img, (0, y_offset))
-            y_offset += img.height
+        if direction == 'H':
+            # Stitch horizontally: sum of widths, max height
+            total_width = sum(widths)
+            max_height = max(heights)
+            stitched_image = Image.new('RGB', (total_width, max_height))
+            
+            # Paste images one by one into the new stitched image
+            x_offset = 0
+            for img in images:
+                stitched_image.paste(img, (x_offset, 0))
+                x_offset += img.width
+        else:
+            # Stitch vertically: sum of heights, max width
+            total_height = sum(heights)
+            max_width = max(widths)
+            stitched_image = Image.new('RGB', (max_width, total_height))
+            
+            # Paste images one by one into the new stitched image
+            y_offset = 0
+            for img in images:
+                stitched_image.paste(img, (0, y_offset))
+                y_offset += img.height
 
-    # Save the stitched image
-    stitched_image.save(save_path)
+        # Save the stitched image
+        stitched_image.save(save_path)
+
+    # return
     return jsonify({"Done": "Images stitched"}), 200
 
 

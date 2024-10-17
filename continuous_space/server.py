@@ -9,7 +9,7 @@ import cv2
 import endpoint
 from PIL import Image
 from yolo_to_checklist_id import yolo_to_check
-from constants import BOXSIZE_EP
+from constants import BOXSIZE_EP, IMAGE_BORDER_SIZE
 
 import pathlib
 temp = pathlib.PosixPath
@@ -70,19 +70,19 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
                 conf = res[4].numpy()               # confidence
                 cls = int(res[5])                   # Class label (integer index) : before convert
                 
-                if cls not in [13, 16, 2]:
+                if cls not in [13, 16]:
                     continue
 
                 label = f'{model.names[int(cls)]} {conf:.2f}'
                 print(f"{i}: conf={conf}, boxsize={boxsize}, label={label}")
-                
+
                 # about same size
                 if abs(boxsize - highest_boxsize) <= BOXSIZE_EP:
                     # but check confidence
                     if conf > highest_conf:
                         highest_conf = conf
                         highest_idx = cls
-                        highest_boxsize = max(boxsize, highest_boxsize)
+                        highest_boxsize = (boxsize, highest_boxsize) / 2
                 # bigger: take
                 elif boxsize > highest_boxsize:
                     highest_conf = conf
@@ -124,7 +124,6 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
         }
         ), 200
     
-    print(ret)
     return ret
 
     # >>>>> Function End
@@ -158,19 +157,9 @@ def upload_image(num):
 
     return do_inference(image_path, num)
 
+
 @app.route('/notify-upload-arrow/<num>', methods=['POST'])
 def upload_image_arrow(num):
-    '''
-    ## >> How to use
-
-    image_path = 'path_to_image.jpg'
-    with open(image_path, 'rb') as img_file:
-        # Prepare the file as part of the form data
-        files = {'file': img_file}
-    
-    # Send the POST request
-    response = requests.post(url, files=files)
-    '''
 
     if 'file' not in request.files:
         return jsonify({"error": "No image part in the request"}), 400
@@ -208,11 +197,14 @@ def mark_rerun():
 
                 # if nothing detected
                 if len(results.xyxy[0]) == 0:
+                    print(f"{filename} has nothing detected")
                     continue
 
                 # find highest confidence
                 highest_conf = 0
                 highest_res = 0
+                highest_boxsize = 0
+                hasRes = False
 
                 # get the highest confidence read
                 for res in results.xyxy[0]:
@@ -220,35 +212,60 @@ def mark_rerun():
                         # task2 only arrow + bullseye
                         if postfix == "_task2":
                             cls = int(res[5])               # Class label (integer index) : before convert
-                            if cls not in [13, 16, 2]:
+                            if cls not in [13, 16]:
                                 continue
-
+                        
+                        x1, y1, x2, y2 = map(int, res[:4])   # Coordinates of the bounding box
+                        boxsize = abs((x2 - x1) * (y2 - y1)) # size of bounding box
                         conf = res[4].numpy()   # confidence
-                        if conf > highest_conf:
+                        # about same size
+                        if abs(boxsize - highest_boxsize) <= BOXSIZE_EP:
+                            # but check confidence
+                            if conf > highest_conf:
+                                highest_conf = conf
+                                highest_boxsize = max(boxsize, highest_boxsize)
+                                highest_res = res
+                                hasRes = True
+                        # bigger: take
+                        elif boxsize > highest_boxsize:
                             highest_conf = conf
+                            highest_boxsize = boxsize
                             highest_res = res
+                            hasRes = True
                     except:
                         pass
 
-                # nothing detected, just skip
-                if highest_res == 0:
-                    continue
-
                 # open image
                 img = cv2.imread(image_path)
+
+                # expand the image
+                expanded_img = cv2.copyMakeBorder(
+                    img,                         
+                    IMAGE_BORDER_SIZE, 
+                    IMAGE_BORDER_SIZE, 
+                    IMAGE_BORDER_SIZE, 
+                    IMAGE_BORDER_SIZE, 
+                    cv2.BORDER_CONSTANT, 
+                    value=[0,0,0])
+                
+                # cv2.imshow("test", img)
+                # cv2.waitKey(0)
+                # cv2.destroyAllWindows()
 
                 # get obstacle id
                 obstacle_id = filename.split("_")[1]
 
                 # mark image
                 try:
-                    mark_img(img, highest_res, obstacle_id)
+                    if hasRes:
+                        mark_img(expanded_img, highest_res, obstacle_id, IMAGE_BORDER_SIZE)
                 except:
                     pass
                 
                 # save image
-                cv2.imwrite(save_path, img)
-
+                cv2.imwrite(save_path, expanded_img)
+                
+    print("\n\n\n")
     return jsonify({"Done": "Images marked"}), 200
     # >>>> End of Function
 
@@ -260,7 +277,7 @@ def stitch():
     mark_response = requests.get("http://127.0.0.1:5000/mark_rerun")
 
     if mark_response.status_code != 200:
-        return mark_response
+        return jsonify({"error": "marking error"}), 404
     
     postfixes = ["_task1", "_task2"]
 
@@ -273,7 +290,7 @@ def stitch():
 
         if not images:
             print("No .jpg images found in the folder.")
-            return
+            continue
 
         # Get total width and height for the final stitched image
         widths, heights = zip(*(img.size for img in images))
@@ -308,14 +325,20 @@ def stitch():
     return jsonify({"Done": "Images stitched"}), 200
 
 
-def mark_img(img, res, obstacle_num):
+def mark_img(img, res, obstacle_num, border_size):
     height, width, _ = img.shape  # Get image dimensions
+    height += border_size
+    width += border_size
 
     # Adjust font scale and thickness based on image size
     font_scale = min(width, height) / 1000  # Adjust this divisor to fine-tune size
     thickness = max(1, int(min(width, height) / 500))  # Adjust this divisor as needed
 
     x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
+    x1 += border_size
+    x2 += border_size
+    y1 += border_size
+    y2 += border_size
     conf = res[4].numpy()               # confidence
     cls = int(res[5])                   # Class label (integer index)
     label = f'name:{model.names[int(cls)]} | id:{yolo_to_check[int(cls)]} | obs_num:{obstacle_num}'

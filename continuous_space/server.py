@@ -9,6 +9,7 @@ import cv2
 import endpoint
 from PIL import Image
 from yolo_to_checklist_id import yolo_to_check
+from constants import BOXSIZE_EP
 
 import pathlib
 temp = pathlib.PosixPath
@@ -57,13 +58,15 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
     
     # find highest confidence
     highest_conf = 0
+    highest_boxsize = 0
     highest_idx = 0
 
     if arrows_only:
         print("Finding arrows (+bullseye) only")
         for i, res in enumerate(results.xyxy[0]):
             try:
-                # x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
+                x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
+                boxsize = abs((x2 - x1) * (y2 - y1)) # size of bounding box
                 conf = res[4].numpy()               # confidence
                 cls = int(res[5])                   # Class label (integer index) : before convert
                 
@@ -71,24 +74,45 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
                     continue
 
                 label = f'{model.names[int(cls)]} {conf:.2f}'
-                print(f"{i}: conf={conf}, label={label}")
-                if conf > highest_conf:
+                print(f"{i}: conf={conf}, boxsize={boxsize}, label={label}")
+                
+                # about same size
+                if abs(boxsize - highest_boxsize) <= BOXSIZE_EP:
+                    # but check confidence
+                    if conf > highest_conf:
+                        highest_conf = conf
+                        highest_idx = cls
+                        highest_boxsize = max(boxsize, highest_boxsize)
+                # bigger: take
+                elif boxsize > highest_boxsize:
                     highest_conf = conf
                     highest_idx = cls
+                    highest_boxsize = boxsize
             except:
                 pass
     else:
         print("Finding all symbols")
         for i, res in enumerate(results.xyxy[0]):
             try:
-                # x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
-                conf = res[4].numpy()               # confidence
-                cls = int(res[5])                   # Class label (integer index)
+                x1, y1, x2, y2 = map(int, res[:4])   # Coordinates of the bounding box
+                boxsize = abs((x2 - x1) * (y2 - y1)) # size of bounding box
+                conf = res[4].numpy()                # confidence
+                cls = int(res[5])                    # Class label (integer index)
                 label = f'{model.names[int(cls)]} {conf:.2f}'
-                print(f"{i}: conf={conf}, label={label}")
-                if conf > highest_conf:
+                print(f"{i}: conf={conf}, boxsize={boxsize}, label={label}")
+
+                # about same size
+                if abs(boxsize - highest_boxsize) <= BOXSIZE_EP:
+                    # but check confidence
+                    if conf > highest_conf:
+                        highest_conf = conf
+                        highest_idx = cls
+                        highest_boxsize = max(boxsize, highest_boxsize)
+                # bigger: take
+                elif boxsize > highest_boxsize:
                     highest_conf = conf
                     highest_idx = cls
+                    highest_boxsize = boxsize
             except:
                 pass
         
@@ -100,7 +124,7 @@ def do_inference(image_path, obstacle_num, arrows_only = False):
         }
         ), 200
     
-    print(ret.content)
+    print(ret)
     return ret
 
     # >>>>> Function End

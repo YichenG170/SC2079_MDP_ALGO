@@ -1,6 +1,8 @@
 __pycache__/
 continuous_space/__pycache__/
 discrete_space/__pycache__/
+continuous_space/images/
+continuous_space/marked/
 continuous_space/images_task1/*
 continuous_space/images_task2/*
 continuous_space/marked_task1/*

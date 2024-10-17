@@ -10,6 +10,7 @@ import endpoint
 from PIL import Image
 from yolo_to_checklist_id import yolo_to_check
 from constants import BOXSIZE_EP, IMAGE_BORDER_SIZE
+import json
 
 import pathlib
 temp = pathlib.PosixPath
@@ -36,7 +37,8 @@ def path():
     json_input = request.json
     print("Input received: ", json_input)
 
-    return endpoint.map_to_inst(json_input)
+    t = endpoint.map_to_inst(json_input)
+    return t
     # >>>> End of function
 
 

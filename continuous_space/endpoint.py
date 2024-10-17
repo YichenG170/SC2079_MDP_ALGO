@@ -121,9 +121,9 @@ def map_to_inst(json_input: json):
 
     # Get the optimal path
     path = optimal_path(field, targets)
-    print("=== path ===\n", path)
-    if path is not None:
-        path = list(filter(lambda x: x[3] != 'SNAP', path))
+    print(path)
+    # if path is not None:
+    #     path = list(filter(lambda x: x[3] != 'SNAP', path))
 
     if path:
         print("Optimal path found.\n")
@@ -203,6 +203,9 @@ def map_to_inst(json_input: json):
         "error": None
     }
 
+    print("before send: ")
+    print(output)
+
     return jsonify(output), 200
 
 
@@ -220,41 +223,35 @@ def map_to_inst(json_input: json):
 
 
 
-# if __name__ == "__main__":
-#     # Sample input
-#     json_input = obs_3_input
+if __name__ == "__main__":
+    # Sample input
+    # json_input = obs_3_input
 
-#     # json_input = """
-#     # {
-#     #     "obstacles":
-#     #     [
-#     #         {
-#     #             "x": 100,
-#     #             "y": 100,
-#     #             "id": 1,
-#     #             "d": 0
-#     #         },
-#     #         {
-#     #             "x": 150,
-#     #             "y": 50,
-#     #             "id": 2,
-#     #             "d": 4
-#     #         }
-#     #     ]
-#     # }
-#     # """
+    json_input = """
+    {
+        "obstacles":
+        [
+            {
+                "x": 100,
+                "y": 100,
+                "id": 1,
+                "d": 0
+            }
+        ]
+    }
+    """
 
-#     input = json.loads(json_input)
+    input = json.loads(json_input)
 
-#     if 1:
+    if 1:
         
 
-#         print("=== input === \n", input)
+        print("=== input === \n", input)
 
-#         output = map_to_inst(input)
-#         output = json.loads(output)
-#         # Call the function and print the result
-#         print("=== output ===\n", output)
+        output = map_to_inst(input)
+        output = json.loads(output)
+        # Call the function and print the result
+        print("=== output ===\n", output)
 
-#     if 0:
-#         cProfile.run('map_to_inst(input)')
+    if 0:
+        cProfile.run('map_to_inst(input)')

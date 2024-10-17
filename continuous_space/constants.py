@@ -41,7 +41,7 @@ DEGREE_90 = 00 # a 90 degree irl is DEGREE_90 in the simulation
 SAMPLE_DISTANCE = 2  # Units between samples when checking collision along paths
 
 # Movement step size
-MOVE_STEP = 1  # Units for straight movements
+MOVE_STEP = 2  # Units for straight movements
 #2
 #5
 

@@ -47,9 +47,9 @@ def do_inference(image_path, obstacle_num):
     # if nothing detected
     if len(results.xyxy[0]) == 0:
         return jsonify({
-            "id": "NA",
-            "name": "NA",
-            "obstacle_num": "NA",
+            "id": 0,
+            "name": 0,
+            "obstacle_num": obstacle_num,
         }
         ), 200
     

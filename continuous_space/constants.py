@@ -24,15 +24,15 @@ ACTIONS = [
 ROBOT_W = 26
 ROBOT_H = 20
 
-OBSTACLE_W = 10
-OBSTACLE_H = 10
+OBSTACLE_W = 15
+OBSTACLE_H = 15
 
 FIELD_W = 200
 FIELD_H = 200
 
 CELL_SIZE = 10
 
-TURN_RADIUS = 29  # Fixed turning radius for quarter-circle turns
+TURN_RADIUS = 30  # Fixed turning radius for quarter-circle turns
 
 DEGREE_90 = 00 # a 90 degree irl is DEGREE_90 in the simulation
 

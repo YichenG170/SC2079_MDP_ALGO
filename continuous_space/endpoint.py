@@ -130,8 +130,8 @@ def map_to_inst(json_input: json):
         # Compute and print movement commands
         # Visualize the path using Pygame, passing the list of targets
         # --------------------uncomment here to visualize the path--------------------
-        thread = threading.Thread(target=visualize_path, args=(field, path, targets))
-        thread.start()
+        # thread = threading.Thread(target=visualize_path, args=(field, path, targets))
+        # thread.start()
         # ----------------------------------------------------------------------------
     else:
         print("No path found.")
@@ -154,8 +154,13 @@ def map_to_inst(json_input: json):
         })
 
         if temp_commands and temp_commands[-1]["action"] == action and action in ["GO_FORWARD", "GO_BACKWARD"]:
-                temp_commands[-1]["distance"] += MOVE_STEP
-        else:
+            temp_commands[-1]["distance"] += MOVE_STEP
+        elif temp_commands and action in ["SNAP"]: 
+            temp_commands.append({
+                "action": "SNAP",
+                "distance": 0
+            })
+        else: 
             distmove = MOVE_STEP if action in ["GO_FORWARD", "GO_BACKWARD"] else DEGREE_90
             temp_commands.append({
             "action": action,
@@ -179,7 +184,8 @@ def map_to_inst(json_input: json):
             act = "BL"
         elif command["action"] == "TURN_RIGHT_BACKWARD":
             act = "BR"
-        elif command["action"] == "SNAP":
+        else:
+        # elif command["action"] == "SNAP":
             act = "SNAP"
 
         if act == "SNAP":

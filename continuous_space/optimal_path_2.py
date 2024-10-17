@@ -86,7 +86,9 @@ def optimal_path(field: Field, targets: list):
             path_segment = path_segment[1:]
 
         combined_path.extend(path_segment)
-        combined_path.append((0, 0, 0, 'SNAP'))
+        target = combined_path[-1]
+        
+        combined_path.append((target[0], target[1], 0, 'SNAP'))
 
         # Update total cost and current position
         total_cost += min_cost

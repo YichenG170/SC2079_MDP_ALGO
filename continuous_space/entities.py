@@ -65,6 +65,7 @@ class Obstacle:
         self.theta = theta      # Orientation in degrees
         self.width = float(OBSTACLE_W)
         self.height = float(OBSTACLE_H)
+        self.id = 0
 
     def __repr__(self):
         return f"Obstacle(Position: {self.center_pos}, Orientation: {self.theta})"
@@ -86,6 +87,12 @@ class Obstacle:
 
     def get_height(self):
         return self.height
+    
+    def set_id(self, id):
+        self.id = id
+        
+    def get_id(self):
+        return self.id
 
     def get_pos(self) -> list:
         x, y = self.get_center_pos()

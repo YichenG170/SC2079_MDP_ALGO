@@ -87,8 +87,17 @@ def optimal_path(field: Field, targets: list):
 
         combined_path.extend(path_segment)
         target = combined_path[-1]
+        direction = target[2]
+        if direction == 0:
+            direction = Direction.RIGHT
+        elif direction == 90:
+            direction = Direction.UP
+        elif direction == 180:
+            direction = Direction.LEFT
+        elif direction == 270:
+            direction = Direction.DOWN
         
-        combined_path.append((target[0], target[1], 0, 'SNAP'))
+        combined_path.append((target[0], target[1], direction, 'SNAP'))
 
         # Update total cost and current position
         total_cost += min_cost

@@ -161,7 +161,8 @@ def map_to_inst(json_input: json):
             temp_commands.append({
                 "action": "SNAP",
                 "x": x,
-                "y": y
+                "y": y,
+                "d": direction
             })
         else: 
             distmove = MOVE_STEP if action in ["GO_FORWARD", "GO_BACKWARD"] else DEGREE_90
@@ -190,10 +191,10 @@ def map_to_inst(json_input: json):
         else:
         # elif command["action"] == "SNAP":
             act = "SNAP"
-
+ 
         if act == "SNAP":
             for target in targets:
-                if abs(int(command['x']) - target[0][0]) + abs(int(command['y'] - target[0][1])) < 5:
+                if abs(int(command['x']) - target[0][0]) + abs(int(command['y'] - target[0][1])) < 5 and int(command['d']) == target[1]:
                     target_id = str(target[2])
                     
             text = "SNAP" + target_id
@@ -202,6 +203,7 @@ def map_to_inst(json_input: json):
             commands.append(f"{act}{str(command['distance']).zfill(3)}")
             
     for element in path:
+        print(element)
         new_path = []
         new_path.append(element[0])
         new_path.append(element[1])

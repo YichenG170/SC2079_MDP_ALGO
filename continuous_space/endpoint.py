@@ -201,20 +201,24 @@ def map_to_inst(json_input: json):
             commands.append(text)
         else:
             commands.append(f"{act}{str(command['distance']).zfill(3)}")
-            
+    
+    snap_path = []
     for element in path:
-        print(element)
-        new_path = []
-        new_path.append(element[0])
-        new_path.append(element[1])
-        if element[2] == 90:
-            new_path.append(0)
-        elif element[2] == 0:
-            new_path.append(2)
-        elif element[2] == 270:
-            new_path.append(4)
-        elif element[2] == 180:
-            new_path.append(6)
+        if element[3] == 'SNAP':
+            new_path = []
+            print(element)
+            new_path.append(element[0])
+            new_path.append(element[1])
+            if element[2] == 90:
+                new_path.append(0)
+            elif element[2] == 0:
+                new_path.append(2)
+            elif element[2] == 270:
+                new_path.append(4)
+            elif element[2] == 180:
+                new_path.append(6)
+            
+        snap_path.append(new_path)
 
     # Create the output dictionary
     output = {

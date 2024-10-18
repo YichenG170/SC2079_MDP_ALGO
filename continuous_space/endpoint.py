@@ -85,7 +85,7 @@ def map_to_inst(json_input: json):
 
     # Create Field and Robot instances
     field = Field(r=100, obs = [])
-    robot = Robot([11, 13], Direction.UP)
+    robot = Robot([13, 14], Direction.UP)
     field.set_robot(robot)
 
     for obstacle in obstacles:
@@ -218,7 +218,7 @@ def map_to_inst(json_input: json):
             elif element[2] == 180:
                 new_path.append(6)
             
-        snap_path.append(new_path)
+            snap_path.append(new_path)
 
     # Create the output dictionary
     output = {

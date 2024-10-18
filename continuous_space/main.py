@@ -15,7 +15,7 @@ def initialize():
     field = Field(r=100, obs=[])
 
     # Initialize the robot at position (50, 50) facing UP (90 degrees)
-    robot = Robot([11, 13], Direction.UP)
+    robot = Robot([13, 14], Direction.UP)
     field.set_robot(robot)
 
     # Add obstacles to the field
@@ -62,31 +62,31 @@ def initialize():
     #     "d": 2
     # }
     
-    obstacle1 = Obstacle([80+5, 10+5], Direction.LEFT)
+    obstacle1 = Obstacle([55, 5], Direction.UP)
     obstacle1.set_id(1)
     field.add_obstacle(obstacle1)
     
-    obstacle1 = Obstacle([130+5, 10+5], Direction.RIGHT)
+    obstacle1 = Obstacle([105, 15], Direction.UP)
     obstacle1.set_id(2)
     field.add_obstacle(obstacle1)
     
-    obstacle1 = Obstacle([90+5, 70+5], Direction.RIGHT)
+    obstacle1 = Obstacle([95, 165], Direction.RIGHT)
     obstacle1.set_id(3)
     field.add_obstacle(obstacle1)
     
-    obstacle1 = Obstacle([190+5, 90+5], Direction.LEFT)
+    obstacle1 = Obstacle([125, 105], Direction.UP)
     obstacle1.set_id(4)
     field.add_obstacle(obstacle1)
     
-    obstacle1 = Obstacle([190+5, 120+5], Direction.LEFT)
+    obstacle1 = Obstacle([165, 35], Direction.UP)
     obstacle1.set_id(5)
     field.add_obstacle(obstacle1)
     
-    obstacle1 = Obstacle([60+5, 120+5], Direction.RIGHT)
+    obstacle1 = Obstacle([15, 185], Direction.RIGHT)
     obstacle1.set_id(6)
     field.add_obstacle(obstacle1)
     
-    obstacle1 = Obstacle([10+5, 180+5], Direction.DOWN)
+    obstacle1 = Obstacle([185, 175], Direction.LEFT)
     obstacle1.set_id(7)
     field.add_obstacle(obstacle1)
 

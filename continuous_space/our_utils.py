@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-from constants import BOXSIZE_EP, IMAGE_BORDER_SIZE, MIN_BOX_SIZE
+from constants import BOXSIZE_EP, IMAGE_BORDER_SIZE, MIN_BOX_SIZE, BULLSEYE_NEG, MIN_CONF
 from yolo_to_checklist_id import yolo_to_check, yolo_to_check_v8_task1, yolo_to_check_v8_task2
 import cv2
 
@@ -33,7 +33,11 @@ def do_inference_v8(model, image_path, obstacle_num, arrows_only = False):
             class_name = model.names[cls]     # Get class name from label
 
             # debug print
-            print(f"{i}: conf={conf}, boxsize={boxsize}, label={cls}, name={class_name}")
+            print(f"{i}: obs={obstacle_num}, conf={conf}, boxsize={boxsize}, label={cls}, name={class_name}")
+
+            if conf < MIN_CONF:
+                print("Below min conf")
+                continue
 
             # ensure arrow if only arrow
             # EDIT IF CHANGE FILE
@@ -81,8 +85,8 @@ def do_inference_v8(model, image_path, obstacle_num, arrows_only = False):
     print("Nothing detected")
     return jsonify({
             "id": 0,
-            "name": 0,
-            "obstacle_num": obstacle_num,
+            "name": "0",
+            "obstacle_id": obstacle_num,
             "detected": 0
         }
         ), 200
@@ -96,15 +100,15 @@ def do_inference_v5(model, image_path, obstacle_num, arrows_only = False):
     # Perform inference
     results = model(image_path)
 
-    # if nothing detected
-    if len(results.xyxy[0]) == 0:
-        return jsonify({
-            "id": 0,
-            "name": 0,
-            "obstacle_num": obstacle_num,
-            "detected": 0
-        }
-        ), 200
+    # # if nothing detected
+    # if len(results.xyxy[0]) == 0:
+    #     return jsonify({
+    #         "id": 0,
+    #         "name": 0,
+    #         "obstacle_num": obstacle_num,
+    #         "detected": 0
+    #     }
+    #     ), 200
     
     
     # find highest confidence
@@ -115,83 +119,70 @@ def do_inference_v5(model, image_path, obstacle_num, arrows_only = False):
 
     if arrows_only:
         print("Finding arrows (+bullseye) only")
-        for i, res in enumerate(results.xyxy[0]):
-            try:
-                x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
-                boxsize = abs((x2 - x1) * (y2 - y1)) # size of bounding box
-                conf = res[4].numpy()               # confidence
-                cls = int(res[5])                   # Class label (integer index) : before convert
-                
+    else:
+        print("Finding all symbols")
+
+
+    for i, res in enumerate(results.xyxy[0]):
+        try:
+            x1, y1, x2, y2 = map(int, res[:4])  # Coordinates of the bounding box
+            boxsize = abs((x2 - x1) * (y2 - y1)) # size of bounding box
+            conf = res[4].numpy()               # confidence
+            cls = int(res[5])                   # Class label (integer index) : before convert
+            
+            if (arrows_only):
                 if cls not in [13, 16]:
                     continue
 
-                if boxsize < MIN_BOX_SIZE:
-                    continue
+            if conf < MIN_CONF:
+                print("Below min conf")
+                continue
 
-                label = f'{model.names[int(cls)]} {conf:.2f}'
-                print(f"{i}: conf={conf}, boxsize={boxsize}, label={label}")
+            if boxsize < MIN_BOX_SIZE:
+                print("below min size")
+                continue
+            
+            # bullseye less important
+            name = model.names[int(cls)]
+            if name == "Bullseye":
+                conf -= BULLSEYE_NEG
 
-                # about same size
-                if abs(boxsize - highest_boxsize) <= BOXSIZE_EP:
-                    # but check confidence
-                    if conf > highest_conf:
-                        highest_conf = conf
-                        highest_idx = cls
-                        highest_boxsize = (boxsize, highest_boxsize) / 2
-                        detected = True
-                # bigger: take
-                elif boxsize > highest_boxsize:
+            label = f'{model.names[int(cls)]} {conf:.2f}'
+            print(f"{i}: obs={obstacle_num}, conf={conf}, boxsize={boxsize}, label={label}")
+
+            # about same size
+            if abs(boxsize - highest_boxsize) <= BOXSIZE_EP:
+                # but check confidence
+                if conf > highest_conf:
                     highest_conf = conf
                     highest_idx = cls
-                    highest_boxsize = boxsize
+                    highest_boxsize = (boxsize, highest_boxsize) / 2
                     detected = True
-            except:
-                pass
-    else:
-        print("Finding all symbols")
-        for i, res in enumerate(results.xyxy[0]):
-            try:
-                x1, y1, x2, y2 = map(int, res[:4])   # Coordinates of the bounding box
-                boxsize = abs((x2 - x1) * (y2 - y1)) # size of bounding box
-                conf = res[4].numpy()                # confidence
-                cls = int(res[5])                    # Class label (integer index)
-                label = f'{model.names[int(cls)]} {conf:.2f}'
-                print(f"{i}: conf={conf}, boxsize={boxsize}, label={label}")
-
-                if boxsize < MIN_BOX_SIZE:
-                    continue
-
-                # about same size
-                if abs(boxsize - highest_boxsize) <= BOXSIZE_EP:
-                    # but check confidence
-                    if conf > highest_conf:
-                        highest_conf = conf
-                        highest_idx = cls
-                        highest_boxsize = max(boxsize, highest_boxsize)
-                        detected = True
-                # bigger: take
-                elif boxsize > highest_boxsize:
-                    highest_conf = conf
-                    highest_idx = cls
-                    highest_boxsize = boxsize
-                    detected = True
-            except:
-                pass
+            # bigger: take
+            elif boxsize > highest_boxsize:
+                highest_conf = conf
+                highest_idx = cls
+                highest_boxsize = boxsize
+                detected = True
+        except:
+            pass
 
     if detected:
-        return jsonify({
+        ret = {
                 "id": int(yolo_to_check[int(highest_idx)]),
                 "name": model.names[int(highest_idx)],
                 "obstacle_id": obstacle_num,
                 "detected": len(results.xyxy[0])
             }
-            ), 200
+        print(ret)
+        return jsonify(ret), 200
             
     # cannot detect for needed purpose
+    print("Nothing detected")
     return jsonify({
             "id": 0,
-            "name": 0,
-            "obstacle_num": obstacle_num,
+            "name": "0",
+            "obstacle_id": obstacle_num,
             "detected": 0
         }
         ), 200
@@ -207,7 +198,7 @@ def mark_img(img, x1, y1, x2, y2, name, id, obstacle_num, border_size):
     width += border_size
 
     # Adjust font scale and thickness based on image size
-    font_scale = min(width, height) / 1000  # Adjust this divisor to fine-tune size
+    font_scale = min(width, height) / 2000  # Adjust this divisor to fine-tune size
     thickness = max(1, int(min(width, height) / 500))  # Adjust this divisor as needed
 
     x1 += border_size

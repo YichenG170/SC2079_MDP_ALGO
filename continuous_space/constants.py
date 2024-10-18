@@ -3,8 +3,10 @@ from enum import Enum
 import multiprocess as mp
 
 BOXSIZE_EP = 5000
-IMAGE_BORDER_SIZE = 100
-MIN_BOX_SIZE = 0
+IMAGE_BORDER_SIZE = 400
+MIN_BOX_SIZE = 13500
+BULLSEYE_NEG = -0.15
+MIN_CONF = 0.4
 
 class Direction(int, Enum):
     RIGHT = 0
@@ -23,8 +25,8 @@ ACTIONS = [
 ]
 
 # Dimensions (units)
-ROBOT_W = 26
-ROBOT_H = 20
+ROBOT_W = 28
+ROBOT_H = 24
 
 OBSTACLE_W = 15
 OBSTACLE_H = 15
@@ -55,7 +57,7 @@ GOAL_THRESHOLD = 2
 MIN_DISTANCE = 0.5 # Bugs here, leave it 1 or 0.5
 
 # Observation distance
-OBSERVATION_DISTANCE = 20 + ROBOT_H / 2
+OBSERVATION_DISTANCE = 25 + ROBOT_H / 2
 
 # Rotation cost
 ROTATION_COST = 0

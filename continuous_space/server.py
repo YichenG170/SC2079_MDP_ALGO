@@ -7,7 +7,7 @@ import torch
 import cv2
 from PIL import Image
 from yolo_to_checklist_id import yolo_to_check
-from constants import BOXSIZE_EP, IMAGE_BORDER_SIZE
+from constants import BOXSIZE_EP, IMAGE_BORDER_SIZE, BULLSEYE_NEG, MIN_CONF
 from ultralytics import YOLO
 from our_utils import *
 # import endpoint
@@ -21,12 +21,12 @@ rpi_url = "http://192.168.27.1:4000"
 app = Flask(__name__)
 
 # task 1
-# MODEL_VERSION = 5
-# MODEL_TASK = 1
+MODEL_VERSION = 5
+MODEL_TASK = 1
 
 # task 2
-MODEL_VERSION = 5
-MODEL_TASK = 2
+# MODEL_VERSION = 5
+# MODEL_TASK = 2
 
 
 # model paths
@@ -80,6 +80,8 @@ def upload_image(num):
     # Send the POST request
     response = requests.post(url, files=files)
     '''
+    global MODEL_TASK
+    MODEL_TASK = 1
 
     if 'file' not in request.files:
         return jsonify({"error": "No image part in the request"}), 400
@@ -102,6 +104,9 @@ def upload_image(num):
 
 @app.route('/notify-upload-arrow/<num>', methods=['POST'])
 def upload_image_arrow(num):
+
+    global MODEL_TASK
+    MODEL_TASK = 2
 
     if 'file' not in request.files:
         return jsonify({"error": "No image part in the request"}), 400
@@ -133,7 +138,7 @@ def mark_rerun():
 
     for postfix in postfixes:
         folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "images"+postfix)
-        print("Folder path: ", folder_path)
+        
         # Loop through all files in the folder
         for filename in os.listdir(folder_path):
             print(filename)
@@ -184,12 +189,19 @@ def mark_rerun():
                         cls = int(yolo_to_check_v8_task2[cls])
 
                     try:
+                        if conf < MIN_CONF:
+                            print("Below min conf")
+                            continue
+
                         # task2 only arrow + bullseye
                         if postfix == "_task2":
                             if cls not in [38, 39]:
                                 print("Not arrow, skipped")
                                 continue
 
+                        if name == "Bullseye":
+                            conf -= BULLSEYE_NEG
+                            print("Bullseye, reduced conf")
                         # print(x1, y1, x2, y2)
                     
                         # about same size
@@ -241,8 +253,11 @@ def mark_rerun():
                     cv2.imwrite(save_path, expanded_img)
                 except:
                     pass
-                
-    print("\n\n\n")
+        
+        print("\n\n")
+        print("Marked folder: ", folder_path)
+        print("\n\n") 
+
     return jsonify({"Done": "Images marked"}), 200
     # >>>> End of Function
 

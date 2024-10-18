@@ -225,7 +225,7 @@ def map_to_inst(json_input: json):
         "data": {
             "commands": commands,
             # "distance": total_distance,
-            "path": new_path
+            "path": snap_path
         },
         "error": None
     }

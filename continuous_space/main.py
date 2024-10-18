@@ -15,7 +15,7 @@ def initialize():
     field = Field(r=100, obs=[])
 
     # Initialize the robot at position (50, 50) facing UP (90 degrees)
-    robot = Robot([13, 14], Direction.UP)
+    robot = Robot([INITIAL_X, INITIAL_Y], Direction.UP)
     field.set_robot(robot)
 
     # Add obstacles to the field

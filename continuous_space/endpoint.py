@@ -85,7 +85,7 @@ def map_to_inst(json_input: json):
 
     # Create Field and Robot instances
     field = Field(r=100, obs = [])
-    robot = Robot([13, 14], Direction.UP)
+    robot = Robot([INITIAL_X, INITIAL_Y], Direction.UP)
     field.set_robot(robot)
 
     for obstacle in obstacles:

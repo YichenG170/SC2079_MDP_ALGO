@@ -377,7 +377,7 @@ def axis_key_func(axis):
     scale_factor = 1e5
     return (int(round(axis[0] * scale_factor)), int(round(axis[1] * scale_factor)))
 
-def polygons_intersect_optimized(poly1, obstacle):
+def polygons_intersect_optimized(poly1, obstacle, expand_distance=EXPAND_DISTANCE):
     """
     Optimized polygon intersection using precomputed obstacle data,
     considering a minimum allowed distance.
@@ -390,7 +390,7 @@ def polygons_intersect_optimized(poly1, obstacle):
 
     for axis in axes:
         key = axis_key_func(axis)
-        proj1 = project_polygon(axis, poly1)
+        proj1 = project_polygon(axis, poly1, expand_distance=EXPAND_DISTANCE)
         # Use precomputed projection for the obstacle
         proj2 = obstacle.projections.get(key)
         if proj2 is None:
@@ -432,7 +432,7 @@ def get_axes(polygon):
     return tuple(axes)
 
 #@cache
-def project_polygon(axis, polygon):
+def project_polygon(axis, polygon, expand_distance=EXPAND_DISTANCE):
     """
     Projects a polygon onto an axis.
     """
@@ -440,8 +440,8 @@ def project_polygon(axis, polygon):
     min_proj = min(dots)
     max_proj = max(dots)
     # Expand the projection by MIN_DISTANCE on both sides
-    min_proj -= MIN_DISTANCE
-    max_proj += MIN_DISTANCE
+    min_proj -= EXPAND_DISTANCE
+    max_proj += EXPAND_DISTANCE
     return (min_proj, max_proj)
 
 #@cache

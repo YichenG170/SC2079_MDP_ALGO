@@ -25,8 +25,11 @@ ACTIONS = [
 ]
 
 # Dimensions (units)
-ROBOT_W = 28
-ROBOT_H = 24
+ROBOT_W = 26
+ROBOT_H = 22
+
+INITIAL_X = 12
+INITIAL_Y = 13
 
 OBSTACLE_W = 15
 OBSTACLE_H = 15
@@ -55,6 +58,9 @@ GOAL_THRESHOLD = 2
 
 # Minimum allowed distance between the robot and objects
 MIN_DISTANCE = 0.5 # Bugs here, leave it 1 or 0.5
+
+# Extra expanded distance for turn projections
+EXPAND_DISTANCE = 5
 
 # Observation distance
 OBSERVATION_DISTANCE = 25 + ROBOT_H / 2

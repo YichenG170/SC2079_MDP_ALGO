@@ -179,6 +179,10 @@ def do_inference_v5(model, image_path, obstacle_num, arrows_only = False):
             
     # cannot detect for needed purpose
     print("Nothing detected")
+    print("highest conf: ", highest_conf)
+    print("highest idx: ", highest_idx)
+    
+    
     return jsonify({
             "id": 0,
             "name": "0",

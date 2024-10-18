@@ -4,6 +4,7 @@ import multiprocess as mp
 
 BOXSIZE_EP = 5000
 IMAGE_BORDER_SIZE = 100
+MIN_BOX_SIZE = 0
 
 class Direction(int, Enum):
     RIGHT = 0

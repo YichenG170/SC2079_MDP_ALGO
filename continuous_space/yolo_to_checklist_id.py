@@ -33,6 +33,26 @@ yolo_to_check = {
   20: '40'
 }
 
+yolo_to_check_v8_task1 = {
+  0: '1', 1: '2', 2: '3', 3: '4', 4: '5', 5: '6', 
+  6: '7', 7: '8', 8: '9', 9: 'A', 10: 'B', 11: 'Bullseye', 
+  12: 'C', 13: 'Circle', 14: 'D', 15: 'Down_arrow', 16: 'E', 
+  17: 'F', 18: 'G', 19: 'H', 20: 'Left_arrow', 21: 'Right_arrow', 
+  22: 'S', 23: 'T', 24: 'U', 25: 'Up_Arrow', 26: 'V', 27: 'W', 
+  28: 'X', 29: 'Y', 30: 'Z'
+  }
+
+# yolo_to_check_v8_task2 = {
+#     0: 10,
+#     1: 39,
+#     2: 38
+#   }
+
+yolo_to_check_v8_task2 = {
+    0: 39,
+    1: 38
+  }
+
 # SYMBOL_MAP = {
 #   0: 'A', 1: 'B', 2: 'Bullseye', 3: 'C', 4: 'D', 5: 'Down Arrow',
 #   6: 'E', 7: 'Eight', 8: 'F', 9: 'Five', 10: 'Four', 11: 'G',

@@ -200,13 +200,26 @@ def map_to_inst(json_input: json):
             commands.append(text)
         else:
             commands.append(f"{act}{str(command['distance']).zfill(3)}")
+            
+    for element in path:
+        new_path = []
+        new_path.append(element[0])
+        new_path.append(element[1])
+        if element[2] == 90:
+            new_path.append(0)
+        elif element[2] == 0:
+            new_path.append(2)
+        elif element[2] == 270:
+            new_path.append(4)
+        elif element[2] == 180:
+            new_path.append(6)
 
     # Create the output dictionary
     output = {
         "data": {
             "commands": commands,
             # "distance": total_distance,
-            "path": path
+            "path": new_path
         },
         "error": None
     }

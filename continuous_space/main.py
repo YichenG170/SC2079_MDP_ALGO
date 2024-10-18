@@ -82,7 +82,7 @@ def initialize():
     obstacle1.set_id(5)
     field.add_obstacle(obstacle1)
     
-    obstacle1 = Obstacle([15, 185], Direction.RIGHT)
+    obstacle1 = Obstacle([15, 195], Direction.RIGHT)
     obstacle1.set_id(6)
     field.add_obstacle(obstacle1)
     

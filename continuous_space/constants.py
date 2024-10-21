@@ -6,7 +6,7 @@ BOXSIZE_EP = 5000
 IMAGE_BORDER_SIZE = 400
 MIN_BOX_SIZE = 13500
 BULLSEYE_NEG = -0.15
-MIN_CONF = 0.4
+MIN_CONF = 0.35
 
 class Direction(int, Enum):
     RIGHT = 0
